@@ -1,0 +1,13 @@
+﻿Installing assembly 'E:\SourceCode\pakshi\PrintService\CommonService\bin\Debug\PrinterService.exe'.
+Affected parameters are:
+   logtoconsole = 
+   logfile = E:\SourceCode\pakshi\PrintService\CommonService\bin\Debug\PrinterService.InstallLog
+   assemblypath = E:\SourceCode\pakshi\PrintService\CommonService\bin\Debug\PrinterService.exe
+Installing service Popin-Printer-Service...
+Service Popin-Printer-Service has been successfully installed.
+Creating EventLog source Popin-Printer-Service in log Application...
+Committing assembly 'E:\SourceCode\pakshi\PrintService\CommonService\bin\Debug\PrinterService.exe'.
+Affected parameters are:
+   logtoconsole = 
+   logfile = E:\SourceCode\pakshi\PrintService\CommonService\bin\Debug\PrinterService.InstallLog
+   assemblypath = E:\SourceCode\pakshi\PrintService\CommonService\bin\Debug\PrinterService.exe

@@ -1,0 +1,24 @@
+INFO  2017-03-17 18:18:47,157   182ms HostingConfiguration   Start              - Starting
+INFO  2017-03-17 18:18:47,333   358ms HostingConfiguration   Start              - Machine Name Mahadheesh-PC
+INFO  2017-03-17 18:18:47,336   361ms HostingConfiguration   Start              - Machine IP 192.168.1.6
+INFO  2017-03-17 18:18:47,336   361ms HostingConfiguration   Start              - Service URL trying to host on http://Mahadheesh-PC:8099
+INFO  2017-03-17 18:18:47,792   817ms HostingConfiguration   Start              - Service URL Available on http://Mahadheesh-PC:8099
+INFO  2017-03-17 20:05:21,828   237ms HostingConfiguration   Start              - Starting
+INFO  2017-03-17 20:05:34,201 12610ms HostingConfiguration   Start              - Machine Name Mahadheesh-PC
+INFO  2017-03-17 20:05:34,205 12614ms HostingConfiguration   Start              - Machine IP 192.168.1.6
+INFO  2017-03-17 20:05:35,583 13992ms HostingConfiguration   Start              - Service URL trying to host on http://Mahadheesh-PC:8099
+ERROR 2017-03-17 20:05:42,325 20734ms HostingConfiguration   Start              - System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation. ---> System.Net.HttpListenerException: Access is denied
+   at System.Net.HttpListener.AddAllPrefixes()
+   at System.Net.HttpListener.Start()
+   at Microsoft.Owin.Host.HttpListener.OwinHttpListener.Start(HttpListener listener, Func`2 appFunc, IList`1 addresses, IDictionary`2 capabilities, Func`2 loggerFactory)
+   at Microsoft.Owin.Host.HttpListener.OwinServerFactory.Create(Func`2 app, IDictionary`2 properties)
+   --- End of inner exception stack trace ---
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Object[] arguments, Signature sig, Boolean constructor)
+   at System.Reflection.RuntimeMethodInfo.UnsafeInvokeInternal(Object obj, Object[] parameters, Object[] arguments)
+   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at Microsoft.Owin.Hosting.ServerFactory.ServerFactoryAdapter.Create(IAppBuilder builder)
+   at Microsoft.Owin.Hosting.Engine.HostingEngine.Start(StartContext context)
+   at Microsoft.Owin.Hosting.Starter.HostingStarter.Start(StartOptions options)
+   at CommonService.HostingConfiguration.Start(HostControl hostcontrol) in G:\SourceCode\CommonService\CommonService\CommonService\WebApiConfig.cs:line 113
+INFO  2017-03-17 20:05:44,326 22735ms HostingConfiguration   Start              - Service URL trying to host on http://localhost:8099
+INFO  2017-03-17 20:05:52,381 30790ms HostingConfiguration   Start              - Service URL Available on http://localhost:8099

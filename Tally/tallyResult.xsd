@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="ENVELOPE" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+  <xs:element name="ENVELOPE" msdata:IsDataSet="true" msdata:UseCurrentLocale="true">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="HEADER">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="VERSION" type="xs:string" minOccurs="0" />
+              <xs:element name="STATUS" type="xs:string" minOccurs="0" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="BODY">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="DATA" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="IMPORTRESULT" minOccurs="0" maxOccurs="unbounded">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="LINEERROR" type="xs:string" minOccurs="0" />
+                          <xs:element name="CREATED" type="xs:string" minOccurs="0" />
+                          <xs:element name="ALTERED" type="xs:string" minOccurs="0" />
+                          <xs:element name="LASTVCHID" type="xs:string" minOccurs="0" />
+                          <xs:element name="LASTMID" type="xs:string" minOccurs="0" />
+                          <xs:element name="COMBINED" type="xs:string" minOccurs="0" />
+                          <xs:element name="IGNORED" type="xs:string" minOccurs="0" />
+                          <xs:element name="ERRORS" type="xs:string" minOccurs="0" />
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

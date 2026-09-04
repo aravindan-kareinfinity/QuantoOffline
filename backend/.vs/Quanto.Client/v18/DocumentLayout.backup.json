@@ -1,0 +1,184 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|d:\\aravindan\\project\\shopppingkart\\client\\backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|d:\\aravindan\\project\\shopppingkart\\client\\backend\\offline\\applicationhost.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|solutionrelative:offline\\applicationhost.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|d:\\aravindan\\project\\shopppingkart\\client\\backend\\app.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|solutionrelative:app.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|d:\\aravindan\\project\\shopppingkart\\client\\backend\\offline\\masterdownload.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|solutionrelative:offline\\masterdownload.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{00000000-0000-0000-0000-000000000000}|\u003CSolution\u003E|Quanto.Client||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|d:\\aravindan\\project\\shopppingkart\\client\\backend\\offline\\billmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|solutionrelative:offline\\billmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|d:\\aravindan\\project\\shopppingkart\\client\\backend\\offline\\login.resx||{81828910-B8B3-4D2B-99A3-067027C180C1}",
+      "RelativeMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|solutionrelative:offline\\login.resx||{81828910-B8B3-4D2B-99A3-067027C180C1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|d:\\aravindan\\project\\shopppingkart\\client\\backend\\offline\\login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|solutionrelative:offline\\login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|d:\\aravindan\\project\\shopppingkart\\client\\backend\\bi\\biproxy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|solutionrelative:bi\\biproxy.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|d:\\aravindan\\project\\shopppingkart\\client\\backend\\bi\\bidownloader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D3DE530-7520-447F-92F2-6FD0B7143DFF}|Quanto.Client.csproj|solutionrelative:bi\\bidownloader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 8,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Login.cs",
+              "DocumentMoniker": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Offline\\Login.cs",
+              "RelativeDocumentMoniker": "Offline\\Login.cs",
+              "ToolTip": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Offline\\Login.cs",
+              "RelativeToolTip": "Offline\\Login.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAjwBgAAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T08:55:14.857Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "MasterDownload.cs",
+              "DocumentMoniker": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Offline\\MasterDownload.cs",
+              "RelativeDocumentMoniker": "Offline\\MasterDownload.cs",
+              "ToolTip": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Offline\\MasterDownload.cs",
+              "RelativeToolTip": "Offline\\MasterDownload.cs",
+              "ViewState": "AgIAAGgAAAAAAAAAAAAEwEoAAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T08:17:16.871Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "BIDownloader.cs",
+              "DocumentMoniker": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\BI\\BIDownloader.cs",
+              "RelativeDocumentMoniker": "BI\\BIDownloader.cs",
+              "ToolTip": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\BI\\BIDownloader.cs",
+              "RelativeToolTip": "BI\\BIDownloader.cs",
+              "ViewState": "AgIAAFkAAAAAAAAAAAAjwHIAAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T07:20:59.677Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "BIProxy.cs",
+              "DocumentMoniker": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\BI\\BIProxy.cs",
+              "RelativeDocumentMoniker": "BI\\BIProxy.cs",
+              "ToolTip": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\BI\\BIProxy.cs",
+              "RelativeToolTip": "BI\\BIProxy.cs",
+              "ViewState": "AgIAAMABAAAAAAAAAAAjwNoBAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T07:20:59.702Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "App.config",
+              "DocumentMoniker": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\App.config",
+              "RelativeDocumentMoniker": "App.config",
+              "ToolTip": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\App.config",
+              "RelativeToolTip": "App.config",
+              "ViewState": "AgIAABgAAAAAAAAAAAAAACgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000601|",
+              "WhenOpened": "2026-09-02T07:28:01.466Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Quanto.Client",
+              "DocumentMoniker": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Quanto.Client.csproj",
+              "RelativeDocumentMoniker": "Quanto.Client.csproj",
+              "ToolTip": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Quanto.Client.csproj",
+              "RelativeToolTip": "Quanto.Client.csproj",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-09-02T07:20:16.804Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ApplicationHost.cs",
+              "DocumentMoniker": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Offline\\ApplicationHost.cs",
+              "RelativeDocumentMoniker": "Offline\\ApplicationHost.cs",
+              "ToolTip": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Offline\\ApplicationHost.cs",
+              "RelativeToolTip": "Offline\\ApplicationHost.cs",
+              "ViewState": "AgIAAH0AAAAAAAAAAADgv4sAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T07:20:59.715Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Login.resx",
+              "DocumentMoniker": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Offline\\Login.resx",
+              "RelativeDocumentMoniker": "Offline\\Login.resx",
+              "ToolTip": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Offline\\Login.resx",
+              "RelativeToolTip": "Offline\\Login.resx",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001005|",
+              "WhenOpened": "2026-09-02T10:24:17.672Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAADQAAAAAAAAAAADgv0IAAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T10:32:48.249Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "BillManager.cs",
+              "DocumentMoniker": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Offline\\BillManager.cs",
+              "RelativeDocumentMoniker": "Offline\\BillManager.cs",
+              "ToolTip": "D:\\aravindan\\project\\shopppingkart\\Client\\backend\\Offline\\BillManager.cs",
+              "RelativeToolTip": "Offline\\BillManager.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwBMAAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-02T09:03:48.645Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

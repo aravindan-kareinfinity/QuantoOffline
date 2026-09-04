@@ -1,0 +1,13 @@
+:host {
+  display: inline-flex;
+}
+
+:host(.w-full) {
+  width: 100%;
+}
+
+:host ::ng-deep [buttonIcon] {
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+}

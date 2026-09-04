@@ -1,0 +1,115 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.ql-text-input__box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 37px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  background: #ffffff;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover:not(.ql-text-input__box--disabled):not(.ql-text-input__box--error) {
+    border-color: #919cad;
+  }
+
+  &:focus-within:not(.ql-text-input__box--disabled):not(.ql-text-input__box--error) {
+    border-color: #ffd6a5;
+    box-shadow: 0 0 0 3px rgba(255, 214, 165, 0.35);
+  }
+
+  &--sm {
+    height: 26px;
+    gap: 0.25rem;
+    padding: 0 6px;
+    border-radius: 6px;
+  }
+
+  &--disabled {
+    background: #f3f4f6;
+    border-color: #d9d9d9;
+    cursor: not-allowed;
+  }
+
+  &--error {
+    border-color: #ef4444;
+  }
+
+  &--error:focus-within:not(.ql-text-input__box--disabled) {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  }
+}
+
+.ql-text-input__field {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: var(--text-ui-sm);
+  line-height: 1.25;
+  color: #111827;
+  outline: none;
+
+  &::placeholder {
+    font-size: var(--text-ui-sm);
+    font-weight: 400;
+    color: #9ca3af;
+    opacity: 1;
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  &[type='number'] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      appearance: none;
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+}
+
+.ql-text-input__toggle {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  padding: 0 0.25rem;
+  font-size: var(--text-ui-sm);
+  font-weight: 500;
+  color: #9ca3af;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: #111827;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+:host ::ng-deep [prefix],
+:host ::ng-deep [suffix] {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  flex-shrink: 0;
+  color: #9ca3af;
+}

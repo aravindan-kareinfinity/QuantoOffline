@@ -1,0 +1,174 @@
+<section class="ql-master-download flex h-full min-h-0 flex-col bg-[var(--ql-shell-content-bg)]">
+  <app-form-screen-header
+    backLabel="Dashboard"
+    [title]="statusText()"
+    [subtitle]="
+      lastDownloadedAt()
+        ? 'Last downloaded: ' + (lastDownloadedAt() | date: 'dd MMM yyyy, HH:mm')
+        : 'Download offline master data from server or another client'
+    "
+    [isSaving]="isSubmitting()"
+    [saveDisabled]="isSubmitting()"
+    saveLabel="Download"
+    saveLoadingLabel="Downloading…"
+    saveVariant="success"
+    (backClicked)="goBack()"
+    (cancelClicked)="goBack()"
+    (saveClicked)="submit(masterForm)"
+  />
+
+  <div class="min-h-0 flex-1 overflow-auto p-4 sm:p-6">
+    <form
+      #masterForm="ngForm"
+      class="mx-auto w-full max-w-xl space-y-5 rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6"
+      (ngSubmit)="submit(masterForm)"
+    >
+      <div class="space-y-2">
+        <p class="text-ui-sm font-medium text-foreground">Master source</p>
+        <div class="flex flex-wrap gap-4 text-ui-sm text-foreground">
+          <label class="inline-flex cursor-pointer items-center gap-2">
+            <input
+              type="radio"
+              name="masterSource"
+              class="h-4 w-4 accent-[var(--color-primary)]"
+              [checked]="draft.masterSource === 'Server'"
+              (change)="onMasterSourceChange('Server')"
+            />
+            Server (Quanto)
+          </label>
+          <label class="inline-flex cursor-pointer items-center gap-2">
+            <input
+              type="radio"
+              name="masterSource"
+              class="h-4 w-4 accent-[var(--color-primary)]"
+              [checked]="draft.masterSource === 'Client'"
+              (change)="onMasterSourceChange('Client')"
+            />
+            Client (Print Service)
+          </label>
+        </div>
+      </div>
+
+      <app-text-input
+        name="serverUrl"
+        [(ngModel)]="draft.serverUrl"
+        [label]="serverLabel + ' URL'"
+        inputId="master-server-url"
+        type="url"
+        [placeholder]="
+          draft.masterSource === 'Client'
+            ? 'http://192.168.1.10:8099'
+            : 'https://demo.quantosaas.com'
+        "
+        required
+      />
+
+      <app-text-input
+        name="dataPath"
+        [(ngModel)]="draft.dataPath"
+        label="Data folder"
+        inputId="master-data-path"
+        placeholder="D:\aravindan\project\shopppingkart"
+        required
+      />
+      <p class="rounded-xl bg-background px-3 py-2 text-ui-sm text-muted">
+        Same as WinForms <code class="text-foreground">App.config</code> key
+        <code class="text-foreground">Data</code>. Master is saved as
+        <code class="text-foreground">master.data</code> (and stock/customer when present) in this
+        folder — not in SQLite / browser DB.
+      </p>
+
+      @if (draft.masterSource === 'Server') {
+        <div class="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+          <app-text-input
+            name="organizationCode"
+            [(ngModel)]="draft.organizationCode"
+            label="SaaS Code"
+            inputId="master-org-code"
+            placeholder="Organization code"
+            [disabled]="!draft.organizationEditable"
+          />
+          <label
+            class="mb-1 inline-flex cursor-pointer items-center gap-2 pb-2 text-ui-sm text-muted"
+            title="Enable to edit SaaS code"
+          >
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-border"
+              [(ngModel)]="draft.organizationEditable"
+              name="organizationEditable"
+            />
+            Edit
+          </label>
+        </div>
+
+        <app-text-input
+          name="locationCode"
+          [(ngModel)]="draft.locationCode"
+          label="Location Code"
+          inputId="master-location-code"
+          placeholder="MAIN"
+          required
+        />
+
+        <app-text-input
+          name="username"
+          [(ngModel)]="draft.username"
+          label="User name"
+          inputId="master-username"
+          autocomplete="username"
+          required
+          minlength="1"
+        />
+
+        <app-text-input
+          name="password"
+          [(ngModel)]="draft.password"
+          label="Password"
+          inputId="master-password"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+
+        <div class="grid gap-4 sm:grid-cols-2 sm:items-end">
+          <label class="inline-flex cursor-pointer items-center gap-2 text-ui-sm text-foreground">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-border"
+              [(ngModel)]="draft.zeroStock"
+              name="zeroStock"
+            />
+            Zero Stock
+          </label>
+
+          <app-date-picker
+            name="zeroStockFrom"
+            [(ngModel)]="draft.zeroStockFrom"
+            label="Purchase From"
+            [disabled]="!draft.zeroStock"
+          />
+        </div>
+      } @else {
+        <p class="rounded-xl bg-background px-3 py-2 text-ui-sm text-muted">
+          Downloads <code class="text-foreground">/TextilePOS/ClientMaster</code> from another
+          Quanto client on the LAN. No SaaS login is required for this mode.
+        </p>
+      }
+
+      <div class="flex justify-end gap-2 pt-2 sm:hidden">
+        <app-button variant="outline" type="button" [disabled]="isSubmitting()" (clicked)="goBack()">
+          Cancel
+        </app-button>
+        <app-button
+          variant="success"
+          type="submit"
+          [loading]="isSubmitting()"
+          [disabled]="isSubmitting()"
+        >
+          Download
+        </app-button>
+      </div>
+    </form>
+  </div>
+</section>

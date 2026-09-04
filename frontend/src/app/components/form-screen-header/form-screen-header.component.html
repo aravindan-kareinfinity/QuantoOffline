@@ -1,0 +1,41 @@
+<header
+  class="flex shrink-0 items-center justify-between gap-2 border-b border-border/80 bg-surface py-[12px] pl-[30px] pr-[50px] shadow-[0_1px_0_var(--color-form-header-shadow)] sm:gap-3"
+>
+  <div class="flex min-w-0 items-center gap-2 sm:gap-3">
+    <app-button
+      variant="link"
+      size="sm"
+      class="shrink-0 max-sm:min-w-0 [&>button]:gap-1.5 [&>button]:px-0 [&>button]:text-ui [&>button]:font-medium [&>button]:text-muted [&>button]:no-underline [&>button]:transition-colors [&>button]:hover:text-accent-hover [&>button]:hover:no-underline"
+      [ariaLabel]="'Back to ' + backLabel()"
+      (clicked)="backClicked.emit()"
+    >
+      <app-icon buttonIcon name="chevron-left" size="sm" />
+      <span class="hidden sm:inline">{{ backLabel() }}</span>
+    </app-button>
+    <span class="hidden h-4 w-px shrink-0 bg-border sm:block" aria-hidden="true"></span>
+    <div class="min-w-0">
+      <h1
+        class="m-0 truncate text-ui-lg font-bold leading-tight tracking-tight text-[color:var(--color-form-header-title)] sm:whitespace-nowrap sm:text-base"
+      >
+        {{ title() }}
+      </h1>
+      @if (subtitle()) {
+        <p class="ql-form-header-desc">{{ subtitle() }}</p>
+      }
+    </div>
+  </div>
+  <div class="flex shrink-0 items-center gap-2">
+    <app-button variant="outline" size="sm" [disabled]="isSaving()" (clicked)="cancelClicked.emit()">
+      Cancel
+    </app-button>
+    <app-button
+      [variant]="saveVariant()"
+      size="sm"
+      [loading]="isSaving()"
+      [disabled]="saveDisabled()"
+      (clicked)="saveClicked.emit()"
+    >
+      {{ isSaving() ? saveLoadingLabel() : saveLabel() }}
+    </app-button>
+  </div>
+</header>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PublishUrlHistory>PrinterService\|publish\</PublishUrlHistory>
+    <InstallUrlHistory>http://www.shobatex.com/preprod/Printerservice/|http://SHOBA/preprod/Printerservice/|http://122.165.103.243/quanto/Printerservice/|http://server/quanto/Printerservice/|http://tpos/quanto/Printerservice/</InstallUrlHistory>
+    <SupportUrlHistory />
+    <UpdateUrlHistory />
+    <BootstrapperUrlHistory />
+    <ErrorReportUrlHistory />
+    <FallbackCulture>en-US</FallbackCulture>
+    <VerifyUploadedFiles>false</VerifyUploadedFiles>
+    <ProjectView>ShowAllFiles</ProjectView>
+  </PropertyGroup>
+  <PropertyGroup>
+    <EnableSecurityDebugging>false</EnableSecurityDebugging>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ReferencePath>E:\Downloads\2022-08-22_07-39-15\Patch\</ReferencePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <StartArguments>
+    </StartArguments>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Update="BI\BISync.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\Billing.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\BIllSettings.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\CurrentDate.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\Customer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\EmployeeSelection.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\FormatSelection.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\Login.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\MasterDownload.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\MyMonthCalendar.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="Offline\OfflineSync.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\OfflineSyncDetail.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\PrinterSelection.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Offline\Settlement.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Service\PrinterServiceHost.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="WinService\Configform.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="WinService\ServiceForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+  </ItemGroup>
+</Project>

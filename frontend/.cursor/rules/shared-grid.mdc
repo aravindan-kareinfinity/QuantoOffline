@@ -1,0 +1,60 @@
+---
+description: Use plain ag-grid-angular in list screens with helpers from styles/ag-grid-theme
+globs: frontend/src/app/screens/**/*.ts,frontend/src/app/screens/**/*.html
+alwaysApply: false
+---
+
+# Screen-local AG Grid
+
+List screens use **`ag-grid-angular`** directly in the template with shared helpers from `frontend/src/styles/ag-grid-theme.ts`. Do not use a grid wrapper component.
+
+See **`settings-user-management-table`** (primary reference) and **`master-company-table`** in `screen-reference.mdc`.
+
+```html
+<div class="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-2.5 sm:flex-nowrap sm:px-4 sm:py-3">
+  <!-- search input + toolbar app-button actions -->
+</div>
+
+<div class="min-h-0 flex-1">
+  <ag-grid-angular
+    class="h-full w-full"
+    [theme]="theme"
+    [rowData]="rows()"
+    [columnDefs]="columnDefs"
+    [defaultColDef]="defaultColDef"
+    [context]="gridContext"
+    [loading]="isLoading()"
+    [pagination]="true"
+    [paginationPageSize]="pageSize"
+    [paginationPageSizeSelector]="false"
+    rowSelection="single"
+    [suppressCellFocus]="true"
+    [animateRows]="false"
+    overlayNoRowsTemplate="No rows found"
+    (gridReady)="onGridReady($event)"
+  />
+</div>
+```
+
+```ts
+import { AgGridAngular } from 'ag-grid-angular';
+import type { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
+import {
+  actionColumnDef,
+  GridActionContext,
+  qlDefaultColDef,
+  qlGridTheme,
+  qlPageSize,
+  serialNoColumnDef,
+  statusColumnDef,
+} from '../../../styles/ag-grid-theme';
+```
+
+## Setup checklist
+
+- AG Grid modules are registered once in `frontend/src/main.ts`.
+- Style search/toolbar with inline Tailwind in the template (no grid wrapper SCSS).
+- Use `qlGridTheme`, `qlDefaultColDef`, `qlPageSize`.
+- Track `gridApi` and a `quickFilterText` signal; call `gridApi.setGridOption('quickFilterText', …)` on search input.
+- Build columns with `serialNoColumnDef`, `statusColumnDef`, `actionColumnDef`.
+- Pass edit/delete handlers via `[context]` (`GridActionContext`).

@@ -1,0 +1,13 @@
+:host {
+  display: block;
+}
+
+.ql-date-picker-trigger:not(:disabled):hover {
+  border-color: var(--color-form-input-border-hover);
+}
+
+.ql-date-picker-trigger:not(:disabled):focus-visible {
+  border-color: var(--color-form-focus-border);
+  box-shadow: 0 0 0 3px var(--color-form-focus-ring);
+  outline: none;
+}

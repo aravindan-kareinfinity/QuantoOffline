@@ -1,0 +1,103 @@
+---
+description: CRUD screen philosophy — flat flow, no one-off helpers, models over literals
+alwaysApply: true
+---
+
+# CRUD code style (required)
+
+Business CRUD app: prefer **simple, readable, linear** code over generic abstractions. A screen should be understandable top-to-bottom without chasing helpers.
+
+## Flat flow
+
+Every CRUD screen should read like:
+
+1. Load lookup data
+2. Load edit data (if editing)
+3. Populate model
+4. Validate
+5. Save
+6. Notify
+7. Navigate back
+
+Prefer **load → map → save → navigate** in the component. Do not split one-time logic into tiny methods.
+
+## Avoid one-off helpers
+
+Do **not** extract a method when logic is:
+
+- used only once
+- fewer than ~5–10 lines
+- forces the reader to jump elsewhere for no gain
+
+**Avoid** (unless reused across multiple screens):
+
+- `findById()`, `resolveOrganizationId()`, `buildRows()`, `mapCompany()`, `getDisplayText()`
+- `rebuildDisplayedRows()`, `gstCellText()`, `initCreateDraft()`, `buildPayload()`, `validate()`
+
+Keep mapping, formatting, and validation **inline** in `load()`, `loadData()`, or `save()`.
+
+```ts
+// GOOD — visible in loadData()
+const rows = locations.map((location) => {
+  const info = refInfo(location);
+  return {
+    ref: location,
+    company: companies.find((c) => c.id === (info.parentid ?? location.productgroup)) ?? new Company(),
+  };
+});
+rows.sort((a, b) => (a.company.name ?? '').localeCompare(b.company.name ?? ''));
+this.locationList.set(rows);
+
+// BAD — one-use helper
+this.rebuildDisplayedRows(companies, locations);
+```
+
+## No generic abstractions
+
+Do not build utilities or wrappers "just in case." Prefer straightforward business logic.
+
+- **Types** for table rows: `type LocationTableRow = { ref: ReferenceList; company: Company }`
+- **Not** wrapper classes whose only job is holding data
+- **Not** thin components/modules that only delegate
+
+## Models, not object literals
+
+Use form model **classes** from `frontend/src/app/models/`:
+
+```ts
+protected draft = new CompanyFormModel();
+```
+
+Not `{ name: '', code: '', … }` object literals for forms.
+
+## Services = API only
+
+Services contain HTTP: `search()`, `getById()`, `save()`, `delete()`.
+
+Business mapping, payload shaping, and display formatting stay in the **component** (or in allowed shared utils — see below).
+
+## Utilities must be genuinely reusable
+
+A util in `frontend/src/app/utils/` is allowed only when:
+
+- used in **three or more screens**, or
+- logic is non-trivial and error-prone to duplicate
+
+Allowed examples: `refInfo()`, `referenceName()`, `deriveReferenceCode()`, `ensureReferenceDropdownSelection()` in `reference-list.util.ts`; `tax.util.ts`.
+
+Do **not** add utils for one-liners or single-screen helpers.
+
+## One responsibility per file
+
+| Layer | Responsibility |
+|-------|----------------|
+| Component | UI + CRUD flow |
+| Service | API calls |
+| Model | Data structure / form model classes |
+| Utility | Shared helpers only (see above) |
+
+## Readable over clever
+
+- No nested callback chains, generic builders, or unnecessary FP
+- Column `valueGetter`s may inline 5–10 lines of display logic
+- Reference screens: `settings-user-management-table` + `settings-user-management-form` (see repo `.cursor/rules/screen-reference.mdc`)

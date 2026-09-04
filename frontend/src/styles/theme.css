@@ -1,0 +1,182 @@
+/**
+ * QuantoLite brand + shell tokens (from previous frontend).
+ */
+@theme {
+  /* Brand */
+  --color-primary: #11172a;
+  --color-primary-hover: #0a0f1c;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #f4a460;
+  --color-secondary-hover: #e8954e;
+  --color-secondary-foreground: #11172a;
+
+  --color-accent: #ffbb5c;
+  --color-accent-hover: #e88f12;
+  --color-accent-foreground: #11172a;
+
+  /* Status */
+  --color-success: #16a34a;
+  --color-success-hover: #15803d;
+  --color-success-foreground: #ffffff;
+
+  --color-warning: #f59e0b;
+  --color-warning-hover: #d97706;
+  --color-warning-foreground: #11172a;
+
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-foreground: #ffffff;
+
+  --color-info: #2563eb;
+  --color-info-hover: #1d4ed8;
+  --color-info-foreground: #ffffff;
+
+  /* Surfaces */
+  --color-background: #f4f4f5;
+  --color-surface: #ffffff; /* cards, inputs, list panels — use bg-surface */
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #11172a;
+
+  /* Text */
+  --color-foreground: #1e2937;
+  --color-muted: #64748b;
+  --color-muted-foreground: #64748b;
+
+  /* Typography — families (loaded in `index.html`) */
+  /* Source Sans Pro ships 400/600/700 only — `font-medium` renders as 400. */
+  --font-sans:
+    'Source Sans Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Typography — screen UI (`text-ui-xs` … `text-ui-lg`) */
+  --text-ui-xs: 0.6875rem;
+  --text-ui-xs--line-height: 1rem;
+  --text-ui-sm: 0.75rem;
+  --text-ui-sm--line-height: 1.125rem;
+  --text-ui: 0.875rem;
+  --text-ui--line-height: 1.25rem;
+  --text-ui-lg: 1.125rem;
+  --text-ui-lg--line-height: 1.5rem;
+
+  /* Forms & sections */
+  --color-section-border: #dfe1e4;
+  --color-form-body: #f8fafc;
+  --color-form-subtle-bg: #f3f4f6;
+  --color-form-input-border: #d9d9d9;
+  --color-form-input-border-hover: #919cad;
+  --color-form-focus-border: #ffd6a5;
+  --color-form-focus-ring: rgb(255 214 165 / 0.35);
+  --color-form-header-shadow: rgb(15 23 42 / 0.04);
+  --color-form-header-title: #0f172a;
+
+  /* Data grid */
+  --color-grid-header: #e8eaed;
+
+  /* Onboarding checklist */
+  --color-onboarding-eyebrow: #a07848;
+  --color-onboarding-next-bg: #fff4e8;
+  --color-onboarding-next-badge: #ffe8cc;
+  --color-onboarding-next-fg: #9a5b14;
+  --color-onboarding-done-bg: #e8f0fe;
+  --color-onboarding-done-fg: #2563eb;
+  --color-onboarding-ring-track: #e8eaed;
+
+  /* Shell chrome (old app) */
+  --color-shell: #1b1919;
+  --color-shell-border: #252527;
+  --color-shell-accent: #ffcc8f;
+  --color-shell-accent-text: #11172a;
+  --color-shell-pill: #c5c5c5;
+}
+
+:root {
+  --ql-shell-chrome-bg: #1b1919;
+  --ql-shell-chrome-border: #252527;
+  --ql-shell-sidebar-bg: var(--ql-shell-chrome-bg);
+  --ql-shell-sidebar-border: var(--ql-shell-chrome-border);
+  --ql-shell-sidebar-footer-bg: var(--ql-shell-chrome-bg);
+  --ql-shell-sidebar-text: rgba(255, 255, 255, 0.72);
+  --ql-shell-sidebar-text-muted: rgba(255, 255, 255, 0.5);
+  --ql-shell-sidebar-text-active: #ffffff;
+  --ql-shell-sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --ql-shell-sidebar-active-bg: rgba(255, 255, 255, 0.12);
+  --ql-shell-sidebar-icon: #b0b0b0;
+  --ql-shell-profile-pill-bg: #c5c5c5;
+  --ql-shell-profile-accent-bg: #ffcc8f;
+  --ql-shell-profile-accent-text: #11172a;
+  --ql-shell-profile-accent-muted: #a07848;
+  --ql-shell-sidebar-accent-bg: var(--ql-shell-profile-accent-bg);
+  --ql-shell-sidebar-accent-text: var(--ql-shell-profile-accent-text);
+  --ql-shell-sidebar-accent-muted: var(--ql-shell-profile-accent-muted);
+  --ql-shell-sidebar-width: 15rem;
+  --ql-shell-sidebar-width-collapsed: 4rem;
+
+  /* Sidebar nav — expanded */
+  --ql-nav-icon-size: 1.25rem;
+  --ql-nav-label-size: 0.9rem;
+  --ql-nav-label-height: 19px;
+  --ql-nav-label-weight: 500;
+  --ql-nav-label-weight-active: 600;
+  --ql-nav-item-gap: 0.625rem;
+  --ql-nav-item-px: 0.875rem;
+  --ql-nav-item-py: 0.875rem;
+  --ql-nav-padding: 0.375rem;
+  --ql-shell-brand-inset-start: 1.75rem;
+  --ql-nav-icon-inset-start: var(--ql-shell-brand-inset-start);
+  --ql-nav-item-pl: calc(var(--ql-nav-icon-inset-start) - var(--ql-nav-padding));
+  --ql-submenu-icon-size: 1rem;
+  --ql-submenu-font-size: 0.9rem;
+  --ql-submenu-item-gap: 0.625rem;
+  --ql-submenu-item-py: 0.5625rem;
+  --ql-submenu-item-px: 0;
+  --ql-submenu-indent-adjust: -0.8rem;
+  --ql-submenu-align-offset: calc(
+    var(--ql-nav-icon-inset-start) + var(--ql-nav-icon-size) + var(--ql-nav-item-gap) +
+      var(--ql-submenu-indent-adjust)
+  );
+
+  --ql-nav-padding-collapsed: 0.375rem;
+  --ql-nav-icon-size-collapsed: 1.25rem;
+  --ql-nav-label-size-collapsed: 0.64rem;
+  --ql-nav-item-gap-collapsed: 0.4375rem;
+  --ql-nav-stack-gap-collapsed: 1.125rem;
+  --ql-nav-item-py-collapsed: 0.625rem;
+  --ql-nav-item-px-collapsed: 0.125rem;
+  --ql-nav-item-radius-collapsed: 0.75rem;
+  --ql-nav-label-opacity-collapsed: 0.72;
+  --ql-nav-extra-offset-top: 0.5rem;
+  --ql-nav-extra-offset-top-collapsed: var(--ql-nav-extra-offset-top);
+  --ql-shell-main-inset-top: 0.375rem;
+  --ql-shell-content-inset-end: 0.75rem;
+  --ql-list-toolbar-py: 0.75rem;
+  --ql-nav-item-py-expanded: 0.875rem;
+  --ql-sidebar-nav-align-top: calc(var(--ql-shell-main-inset-top) + var(--ql-list-toolbar-py));
+  --ql-shell-content-bg: #f4f4f5;
+  --ql-shell-header-height: 3.5rem;
+  --ql-shell-logo-height: 2.25rem;
+  --ql-shell-logo-height-xl: 2.5rem;
+  --ql-shell-logo-max-width: 16rem;
+  --ql-shell-logo-max-width-xl: 18.5rem;
+
+  /* Form tokens (alias @theme colors for style="" / third-party CSS) */
+  --ql-form-section-border: var(--color-section-border);
+  --ql-form-body-bg: var(--color-form-body);
+  --ql-form-input-border: var(--color-form-input-border);
+  --ql-form-input-border-hover: var(--color-form-input-border-hover);
+  --ql-form-focus-border: var(--color-form-focus-border);
+  --ql-form-focus-ring: var(--color-form-focus-ring);
+  --ql-form-subtle-bg: var(--color-form-subtle-bg);
+  --ql-list-toolbar-bg: var(--color-form-body);
+  --ql-surface-bg: var(--color-surface);
+  --ql-grid-header-bg: var(--color-grid-header);
+  --ql-grid-header-band-height: 40px;
+  --ql-product-attrs-active-text: var(--color-foreground);
+  --ql-product-attrs-active-bg: color-mix(in srgb, var(--color-secondary) 22%, var(--color-surface));
+  --ql-text-ui-xs-size: var(--text-ui-xs);
+  --ql-text-ui-sm-size: var(--text-ui-sm);
+  --ql-text-ui-size: var(--text-ui);
+  --ql-text-ui-lg-size: var(--text-ui-lg);
+}

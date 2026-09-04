@@ -1,0 +1,105 @@
+<div
+  class="flex h-full w-full min-h-0 flex-col overflow-hidden"
+  style="background-color: var(--ql-shell-sidebar-bg)"
+  [ngClass]="{ 'is-collapsed': collapsed() }"
+>
+  <div class="home-sidebar-nav min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+    <nav class="ql-sidebar-nav">
+      @for (item of items; track item.id) {
+        @if (hasSubmenu(item) && !collapsed()) {
+          <div class="ql-nav-section">
+            <div
+              class="ql-nav-section-row"
+              [ngClass]="{ 'ql-nav-section-active': isSectionActive(item) }"
+            >
+              <app-icon class="sb-icon" [name]="item.icon" size="md" />
+              <button
+                type="button"
+                class="ql-nav-section-title"
+                (click)="toggleSection(item.id)"
+              >
+                {{ item.label }}
+              </button>
+              <button
+                type="button"
+                class="ql-nav-toggle-btn"
+                [attr.aria-expanded]="isExpanded(item.id)"
+                aria-label="Toggle submenu"
+                (click)="toggleSection(item.id, $event)"
+              >
+                <app-icon
+                  name="chevron-down"
+                  size="sm"
+                  [svgClass]="isExpanded(item.id) ? 'transition-transform duration-200 rotate-180' : 'transition-transform duration-200'"
+                />
+              </button>
+            </div>
+
+            @if (isExpanded(item.id)) {
+              <div class="ql-nav-submenu">
+                @for (sub of item.submenu; track sub.id) {
+                  <a
+                    [routerLink]="sub.path"
+                    routerLinkActive="ql-nav-subactive"
+                    class="ql-nav-subitem"
+                    (click)="onNavClick()"
+                  >
+                    <app-icon class="ql-nav-subitem-icon" [name]="sub.icon" size="sm" />
+                    <span class="ql-nav-subitem-label">
+                      {{ sub.label }}
+                    </span>
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        } @else if (item.path; as path) {
+          <a
+            [routerLink]="path"
+            routerLinkActive="ql-nav-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="ql-nav-item w-full"
+            [ngClass]="navItemClasses()"
+            (click)="onNavClick()"
+          >
+            <app-icon class="sb-icon" [name]="item.icon" size="md" />
+            @if (!collapsed()) {
+              <span class="ql-nav-item-label">{{ item.label }}</span>
+            } @else {
+              <span class="ql-nav-item-label ql-nav-item-label--collapsed">{{ item.label }}</span>
+            }
+          </a>
+        } @else {
+          <button
+            type="button"
+            class="ql-nav-item w-full"
+            [ngClass]="navItemClasses()"
+          >
+            <app-icon class="sb-icon" [name]="item.icon" size="md" />
+            @if (!collapsed()) {
+              <span class="ql-nav-item-label">{{ item.label }}</span>
+            } @else {
+              <span class="ql-nav-item-label ql-nav-item-label--collapsed">{{ item.label }}</span>
+            }
+          </button>
+        }
+      }
+    </nav>
+  </div>
+
+  <div class="ql-sidebar-footer hidden lg:block">
+    <div class="ql-sidebar-footer-divider" aria-hidden="true"></div>
+    <button
+      type="button"
+      class="ql-sidebar-collapse-btn"
+      [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+      (click)="toggleCollapse()"
+    >
+      <app-icon
+        name="chevrons-right"
+        size="md"
+        [svgClass]="collapsed() ? 'transition-transform' : 'transition-transform rotate-180'"
+      />
+    </button>
+  </div>
+</div>

@@ -1,0 +1,22 @@
+<div class="relative min-h-full">
+  <router-outlet />
+
+  <div class="pointer-events-none fixed top-4 right-4 z-[60] flex max-w-sm flex-col items-end gap-2">
+    @for (n of notifications.notifications(); track n.id) {
+      <div
+        class="pointer-events-auto w-full rounded-lg px-4 py-3 text-xs text-white shadow-lg"
+        [ngClass]="{
+          'bg-danger': n.kind === 'error',
+          'bg-warning': n.kind === 'warning',
+          'bg-success': n.kind === 'success',
+          'bg-primary': n.kind === 'info',
+        }"
+        role="alert"
+      >
+        {{ n.message }}
+      </div>
+    }
+  </div>
+
+  <app-confirm-dialog />
+</div>

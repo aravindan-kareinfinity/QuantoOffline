@@ -1,0 +1,144 @@
+<div class="flex w-full flex-col gap-1.5">
+  @if (label()) {
+    <label [attr.for]="inputId()" class="text-ui-sm font-medium text-foreground">
+      {{ label() }}
+      @if (required()) {
+        <span class="text-danger" aria-hidden="true">*</span>
+      }
+    </label>
+  }
+
+  <ng-select
+    [id]="inputId()"
+    class="ql-dropdown__control ql-dropdown-panel"
+    [items]="items()"
+    [bindLabel]="bindLabel()"
+    [bindValue]="bindValue()"
+    [addTag]="effectiveAddTag()"
+    [addTagText]="addTagText()"
+    [appearance]="appearance()"
+    [appendTo]="appendTo()"
+    [bufferAmount]="bufferAmount() ?? 4"
+    [closeOnSelect]="effectiveCloseOnSelect()"
+    [clearAllText]="clearAllText()"
+    [clearable]="effectiveClearable()"
+    [clearOnBackspace]="clearOnBackspace() ?? true"
+    [compareWith]="effectiveCompareWith()"
+    [dropdownPosition]="dropdownPosition() ?? 'auto'"
+    [fixedPlaceholder]="fixedPlaceholder() ?? false"
+    [groupBy]="effectiveGroupBy()"
+    [groupValue]="effectiveGroupValue()"
+    [selectableGroup]="selectableGroup() ?? false"
+    [selectableGroupAsModel]="selectableGroupAsModel() ?? true"
+    [loading]="loading()"
+    [loadingText]="loadingText()"
+    [labelForId]="labelForId() || inputId()"
+    [markFirst]="effectiveMarkFirst()"
+    [maxSelectedItems]="maxSelectedItems() ?? undefined"
+    [hideSelected]="effectiveHideSelected()"
+    [multiple]="multiple()"
+    [notFoundText]="notFoundText()"
+    [placeholder]="placeholder()"
+    [searchable]="effectiveSearchable()"
+    [readonly]="isDisabled()"
+    [searchFn]="searchFn() ?? null"
+    [searchWhileComposing]="searchWhileComposing() ?? true"
+    [trackByFn]="trackByFn() ?? null"
+    [clearSearchOnAdd]="clearSearchOnAdd() ?? true"
+    [deselectOnClick]="deselectOnClick() ?? multiple()"
+    [editableSearchTerm]="effectiveEditableSearchTerm()"
+    [selectOnTab]="selectOnTab()"
+    [tabFocusOnClearButton]="tabFocusOnClearButton() ?? true"
+    [openOnEnter]="openOnEnter() ?? true"
+    [outsideClickEvent]="outsideClickEvent() ?? 'click'"
+    [minTermLength]="minTermLength() ?? 0"
+    [typeToSearchText]="typeToSearchText()"
+    [virtualScroll]="virtualScroll()"
+    [inputAttrs]="effectiveInputAttrs()"
+    [tabIndex]="tabIndex() ?? undefined"
+    [preventToggleOnRightClick]="preventToggleOnRightClick() ?? false"
+    [keyDownFn]="effectiveKeyDownFn()"
+    [ngModel]="value()"
+    (ngModelChange)="onModelChange($event)"
+    (search)="onSearch($event)"
+    (open)="onOpen()"
+    (close)="onClose()"
+    (add)="onAdd($event)"
+    (blur)="blur.emit()"
+    (clear)="clear.emit()"
+    (focus)="focus.emit()"
+    (remove)="remove.emit($event)"
+    (scroll)="scroll.emit($event)"
+    (scrollToEnd)="scrollToEnd.emit()"
+    [class.ng-invalid]="!!displayError()"
+  >
+    @if (multiple() && showSelectAll() && hasEnabledItems()) {
+      <ng-template ng-header-tmp>
+        @if (headerTemplate(); as headerTpl) {
+          <ng-container [ngTemplateOutlet]="headerTpl" />
+        }
+        <button
+          type="button"
+          class="ql-dropdown__select-all"
+          [attr.aria-pressed]="allEnabledSelected()"
+          (mousedown)="$event.preventDefault()"
+          (click)="toggleSelectAll($event)"
+        >
+          {{ allEnabledSelected() ? 'Clear all' : 'Select all' }}
+        </button>
+      </ng-template>
+    } @else if (headerTemplate(); as headerTpl) {
+      <ng-template ng-header-tmp>
+        <ng-container [ngTemplateOutlet]="headerTpl" />
+      </ng-template>
+    }
+
+    @if (optionTemplate(); as tpl) {
+      <ng-template ng-option-tmp let-item="item" let-index="index">
+        <ng-container
+          [ngTemplateOutlet]="tpl"
+          [ngTemplateOutletContext]="optionContext(item, index)"
+        />
+      </ng-template>
+    } @else {
+      <ng-template ng-option-tmp let-item="item">
+        <span class="ql-dropdown__option">
+          <span>{{ itemLabel(item) }}</span>
+        </span>
+      </ng-template>
+    }
+
+    @if (footerTemplate(); as footerTpl) {
+      <ng-template ng-footer-tmp>
+        <ng-container [ngTemplateOutlet]="footerTpl" />
+      </ng-template>
+    }
+
+    @if (selectedTemplate(); as selectedTpl) {
+      <ng-template ng-label-tmp let-item="item">
+        <ng-container
+          [ngTemplateOutlet]="selectedTpl"
+          [ngTemplateOutletContext]="selectedContext(item, selectedValueList())"
+        />
+      </ng-template>
+      <ng-template ng-multi-label-tmp let-items="items">
+        <ng-container
+          [ngTemplateOutlet]="selectedTpl"
+          [ngTemplateOutletContext]="selectedContext(items, selectedValueList())"
+        />
+      </ng-template>
+    }
+  </ng-select>
+
+  <ng-content />
+
+  @if (displayError() && !hideErrorMessage()) {
+    <p [id]="inputId() + '-error'" class="text-ui-sm text-danger" role="alert">
+      {{ displayError() }}
+    </p>
+  } @else if (hint()) {
+    <p [id]="inputId() + '-hint'" class="text-ui-sm text-muted">
+      {{ hint() }}
+    </p>
+  }
+</div>

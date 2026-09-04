@@ -1,0 +1,21 @@
+@let icon = definition();
+<svg
+  [class]="svgClasses()"
+  [attr.viewBox]="icon.viewBox ?? '0 0 24 24'"
+  [attr.fill]="icon.fill ?? 'none'"
+  [attr.stroke]="icon.stroke ?? 'currentColor'"
+  [attr.stroke-width]="icon.strokeWidth ?? 2"
+  aria-hidden="true"
+>
+  @for (circle of icon.circles ?? []; track $index) {
+    <circle [attr.cx]="circle.cx" [attr.cy]="circle.cy" [attr.r]="circle.r" />
+  }
+  @for (path of icon.paths ?? []; track $index) {
+    <path
+      [attr.d]="path.d"
+      [attr.stroke-linecap]="path.linecap"
+      [attr.stroke-linejoin]="path.linejoin"
+      [attr.fill]="path.fill"
+    />
+  }
+</svg>

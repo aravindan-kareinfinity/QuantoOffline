@@ -1,0 +1,353 @@
+:host {
+  transition:
+    width 0.3s ease-out,
+    transform 0.3s ease-out;
+}
+
+@media (max-width: 1023px) {
+  :host {
+    position: fixed;
+    top: var(--ql-shell-header-height);
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    width: min(var(--ql-shell-sidebar-width), 88vw) !important;
+    transform: translateX(-100%);
+  }
+
+  :host(.home-sidebar--open) {
+    transform: translateX(0);
+  }
+}
+
+@media (min-width: 1024px) {
+  :host {
+    transform: none !important;
+  }
+}
+
+.home-sidebar-nav {
+  scrollbar-width: none;
+  padding-inline: var(--ql-nav-padding);
+  padding-bottom: var(--ql-nav-padding);
+  padding-top: calc(var(--ql-sidebar-nav-align-top) - var(--ql-nav-item-py) + var(--ql-nav-extra-offset-top));
+}
+
+.is-collapsed .home-sidebar-nav {
+  padding-inline: var(--ql-nav-padding-collapsed);
+  padding-bottom: var(--ql-nav-padding-collapsed);
+  padding-top: calc(
+    var(--ql-sidebar-nav-align-top) - var(--ql-nav-item-py-collapsed) +
+      var(--ql-nav-extra-offset-top-collapsed)
+  );
+}
+
+.home-sidebar-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.ql-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.is-collapsed .ql-sidebar-nav {
+  gap: var(--ql-nav-stack-gap-collapsed);
+}
+
+.sb-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--ql-nav-icon-size);
+  height: var(--ql-nav-icon-size);
+  color: var(--ql-shell-sidebar-icon);
+}
+
+.sb-icon ::ng-deep svg {
+  width: var(--ql-nav-icon-size);
+  height: var(--ql-nav-icon-size);
+}
+
+.is-collapsed .sb-icon ::ng-deep svg {
+  width: var(--ql-nav-icon-size-collapsed);
+  height: var(--ql-nav-icon-size-collapsed);
+}
+
+.ql-nav-item {
+  color: var(--ql-shell-sidebar-text);
+  text-decoration: none;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.ql-nav-item--expanded {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--ql-nav-item-gap);
+  min-height: 2.875rem;
+  padding-block: var(--ql-nav-item-py);
+  padding-inline: var(--ql-nav-item-px);
+  padding-left: var(--ql-nav-item-pl);
+  border-radius: 1rem;
+}
+
+.ql-nav-item--collapsed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ql-nav-item-gap-collapsed);
+  padding: var(--ql-nav-item-py-collapsed) var(--ql-nav-item-px-collapsed);
+  border-radius: var(--ql-nav-item-radius-collapsed);
+}
+
+.ql-nav-item-label {
+  min-width: 0;
+  flex: 0 1 auto;
+  text-align: left;
+  font-size: var(--ql-nav-label-size);
+  font-weight: var(--ql-nav-label-weight);
+  min-height: var(--ql-nav-label-height);
+  line-height: var(--ql-nav-label-height);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ql-nav-item-label--collapsed {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  flex: none;
+  padding-inline: 0;
+  font-size: var(--ql-nav-label-size-collapsed);
+  font-weight: 400;
+  min-height: var(--ql-nav-label-height);
+  line-height: var(--ql-nav-label-height);
+  letter-spacing: -0.03em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  color: var(--ql-shell-sidebar-text);
+  opacity: var(--ql-nav-label-opacity-collapsed);
+}
+
+.ql-nav-item:hover {
+  background-color: transparent;
+  color: var(--ql-shell-sidebar-accent-bg);
+}
+
+.ql-nav-item:hover .sb-icon,
+.ql-nav-item:hover .ql-nav-item-label,
+.ql-nav-item:hover .ql-nav-item-label--collapsed {
+  color: var(--ql-shell-sidebar-accent-bg);
+  opacity: 1;
+}
+
+.ql-nav-item.ql-nav-active {
+  background-color: transparent;
+  color: var(--ql-shell-sidebar-accent-bg);
+  font-weight: var(--ql-nav-label-weight-active);
+}
+
+.ql-nav-item.ql-nav-active .sb-icon,
+.ql-nav-item.ql-nav-active .ql-nav-item-label,
+.ql-nav-item.ql-nav-active .ql-nav-item-label--collapsed {
+  color: var(--ql-shell-sidebar-accent-bg);
+  opacity: 1;
+}
+
+.ql-nav-item.ql-nav-active .ql-nav-item-label {
+  font-weight: var(--ql-nav-label-weight-active);
+}
+
+.ql-nav-section-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ql-nav-item-gap);
+  min-height: 2.875rem;
+  padding-block: var(--ql-nav-item-py);
+  padding-inline: var(--ql-nav-item-px);
+  padding-left: var(--ql-nav-item-pl);
+  border-radius: 1rem;
+  color: var(--ql-shell-sidebar-text);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.ql-nav-section-row:hover {
+  background-color: transparent;
+  color: var(--ql-shell-sidebar-accent-bg);
+}
+
+.ql-nav-section-row:hover .sb-icon,
+.ql-nav-section-row:hover .ql-nav-section-title,
+.ql-nav-section-row:hover .ql-nav-toggle-btn {
+  color: var(--ql-shell-sidebar-accent-bg);
+}
+
+.ql-nav-section-row.ql-nav-section-active {
+  color: var(--ql-shell-sidebar-accent-bg);
+}
+
+.ql-nav-section-row.ql-nav-section-active .sb-icon,
+.ql-nav-section-row.ql-nav-section-active .ql-nav-section-title,
+.ql-nav-section-row.ql-nav-section-active .ql-nav-toggle-btn {
+  color: var(--ql-shell-sidebar-accent-bg);
+}
+
+.ql-nav-section-title,
+.ql-nav-toggle-btn {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ql-nav-section-title {
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+  font-size: var(--ql-nav-label-size);
+  font-weight: var(--ql-nav-label-weight);
+  min-height: var(--ql-nav-label-height);
+  line-height: var(--ql-nav-label-height);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ql-nav-section-row.ql-nav-section-active .ql-nav-section-title {
+  font-weight: var(--ql-nav-label-weight-active);
+}
+
+.ql-nav-toggle-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.5rem;
+}
+
+.ql-nav-subitem {
+  display: flex;
+  align-items: center;
+  gap: var(--ql-submenu-item-gap);
+  width: 100%;
+  padding: var(--ql-submenu-item-py) var(--ql-submenu-item-px);
+  border-radius: 0.5rem;
+  color: var(--ql-shell-sidebar-text-muted);
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.ql-nav-subitem-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--ql-submenu-icon-size);
+  height: var(--ql-submenu-icon-size);
+  color: var(--ql-shell-sidebar-icon);
+  opacity: 0.85;
+}
+
+.ql-nav-subitem-icon ::ng-deep svg {
+  width: var(--ql-submenu-icon-size);
+  height: var(--ql-submenu-icon-size);
+}
+
+.ql-nav-subitem:hover {
+  background-color: transparent;
+  color: var(--ql-shell-sidebar-accent-bg);
+}
+
+.ql-nav-subitem:hover .ql-nav-subitem-icon,
+.ql-nav-subitem:hover .ql-nav-subitem-label {
+  color: var(--ql-shell-sidebar-accent-bg);
+}
+
+.ql-nav-subitem.ql-nav-subactive {
+  color: var(--ql-shell-sidebar-accent-bg);
+  font-weight: var(--ql-nav-label-weight-active);
+}
+
+.ql-nav-subitem.ql-nav-subactive .ql-nav-subitem-icon {
+  color: var(--ql-shell-sidebar-accent-bg);
+}
+
+.ql-nav-subitem-label {
+  min-width: 0;
+  flex: 1;
+  font-size: var(--ql-submenu-font-size);
+  font-weight: var(--ql-nav-label-weight);
+  min-height: var(--ql-nav-label-height);
+  line-height: var(--ql-nav-label-height);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ql-nav-subitem.ql-nav-subactive .ql-nav-subitem-label {
+  font-weight: var(--ql-nav-label-weight-active);
+}
+
+.ql-nav-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding-left: var(--ql-submenu-align-offset);
+}
+
+.ql-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--ql-shell-sidebar-footer-bg);
+  padding: 0.75rem 0.375rem 0.875rem;
+}
+
+.ql-sidebar-footer-divider {
+  width: 55%;
+  height: 1px;
+  background: var(--ql-shell-chrome-border);
+}
+
+.ql-sidebar-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  padding: 0.25rem;
+  color: rgb(255 255 255 / 0.4);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.ql-sidebar-collapse-btn:hover {
+  background: transparent;
+  color: var(--ql-shell-sidebar-accent-bg);
+}
+
+.ql-sidebar-collapse-btn ::ng-deep svg {
+  display: block;
+  width: var(--ql-nav-icon-size);
+  height: var(--ql-nav-icon-size);
+  transform-origin: center;
+}

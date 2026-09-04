@@ -1,0 +1,67 @@
+<div class="flex w-full flex-col gap-1.5">
+  @if (label()) {
+    <label [attr.for]="inputId()" class="text-ui-sm font-medium text-foreground">
+      {{ label() }}
+      @if (required()) {
+        <span class="text-danger" aria-hidden="true">*</span>
+      }
+    </label>
+  }
+
+  <div
+    class="ql-text-input__box"
+    [class.ql-text-input__box--sm]="size() === 'sm'"
+    [class.ql-text-input__box--error]="!!displayError()"
+    [class.ql-text-input__box--disabled]="isDisabled()"
+  >
+    <span class="inline-flex shrink-0 empty:hidden">
+      <ng-content select="[prefix]" />
+    </span>
+
+    <input
+      class="ql-text-input__field"
+      [id]="inputId()"
+      [type]="inputType()"
+      [value]="value()"
+      [placeholder]="placeholder()"
+      [disabled]="isDisabled()"
+      [required]="required()"
+      [attr.min]="min()"
+      [attr.max]="max()"
+      [attr.autocomplete]="autocomplete()"
+      [attr.aria-invalid]="displayError() ? true : null"
+      [attr.aria-required]="required() ? true : null"
+      [attr.aria-describedby]="describedBy()"
+      (input)="onInput($event)"
+      (focus)="focused.set(true)"
+      (blur)="onBlur()"
+      (keydown.enter)="onEnter($event)"
+    />
+
+    <span class="inline-flex shrink-0 self-stretch empty:hidden">
+      <ng-content select="[suffix]" />
+    </span>
+
+    @if (isPassword()) {
+      <button
+        type="button"
+        class="ql-text-input__toggle"
+        [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+        [disabled]="isDisabled()"
+        (click)="togglePassword()"
+      >
+        {{ showPassword() ? 'Hide' : 'Show' }}
+      </button>
+    }
+  </div>
+
+  @if (displayError()) {
+    <p [id]="inputId() + '-error'" class="text-ui-sm text-danger" role="alert">
+      {{ displayError() }}
+    </p>
+  } @else if (hint()) {
+    <p [id]="inputId() + '-hint'" class="text-ui-sm text-muted">
+      {{ hint() }}
+    </p>
+  }
+</div>

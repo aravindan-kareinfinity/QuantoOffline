@@ -1,0 +1,25 @@
+---
+description: Thin screens — bind API results directly, no client reshape
+globs: frontend/src/app/screens/**/*.ts,frontend/src/app/services/**/*.ts
+alwaysApply: false
+---
+
+# Direct API bind
+
+Screens bind service results as returned. Do not reshape lists in the component unless the UI truly needs it.
+
+```ts
+// ❌ BAD — unnecessary client sort / copy
+const rows = await this.taxService.search({});
+this.taxList.set(rows.slice().sort((a, b) => a.name.localeCompare(b.name)));
+
+// ✅ GOOD — set what the API returned
+this.taxList.set(await this.taxService.search({}));
+```
+
+- No mappers, DTO→view-model copies, or cosmetic `slice()`/`sort()`/`map()` on load.
+- Filter/search in the UI is fine (e.g. local search box on an already-loaded list).
+- Sort/filter belongs on the API when the list must be ordered for everyone.
+- Services wrap POST bodies with `actionRequest(item)` (`{ Item, securitytoken }` — InfyPOS `ActionRequest<T>`). Screens still bind the response body as-is (`T[]` / `T` / `boolean`).
+- Keep screen API calls straightforward: `await service…`, then bind / navigate. No extra ok/id/ErrorMessage branches, duplicate error toasts, or catch that only re-notifies — HTTP errors are handled by interceptors.
+- Login `/token` is form-urlencoded OAuth — not `ActionRequest`.

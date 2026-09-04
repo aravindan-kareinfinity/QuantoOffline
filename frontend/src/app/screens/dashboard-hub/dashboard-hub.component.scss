@@ -1,0 +1,61 @@
+.ql-dashboard-hub__toggle-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 0.625rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .ql-dashboard-hub__toggle-bar {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+.ql-view-toggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  background-color: #f4f4f5;
+  padding: 0.125rem;
+}
+
+.ql-view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #64748b;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.ql-view-toggle-btn:hover {
+  color: #334155;
+}
+
+.ql-view-toggle-btn--active {
+  background-color: #ffffff;
+  color: #11172a;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+
+.ql-dashboard-hub__outlet {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.ql-dashboard-hub__outlet > ::ng-deep * {
+  flex: 1 1 auto;
+  min-height: 0;
+}

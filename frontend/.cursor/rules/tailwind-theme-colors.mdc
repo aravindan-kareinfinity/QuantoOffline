@@ -1,0 +1,30 @@
+---
+description: Use Tailwind semantic theme colors from styles/theme.css — never hardcode palette colors in components
+globs: frontend/src/app/**/*.{ts,html,scss,css}
+alwaysApply: false
+---
+
+# Semantic Tailwind colors
+
+Define brand colors only in `src/styles/theme.css` (`@theme`).
+
+## Use
+
+```html
+<button class="bg-primary text-primary-foreground hover:bg-primary-hover">Save</button>
+<p class="text-muted">Hint</p>
+<div class="border-border bg-surface">Card</div>
+```
+
+## Avoid
+
+```html
+<button class="bg-slate-900">Save</button>
+<button class="bg-blue-600">Save</button>
+<span class="text-red-600">Error</span>
+```
+
+## Tokens
+
+`primary`, `secondary`, `accent`, `success`, `warning`, `danger`, `info`,
+`background`, `surface`, `border`, `foreground`, `muted`

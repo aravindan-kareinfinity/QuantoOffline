@@ -1,0 +1,274 @@
+<div class="home-header-grid">
+  <div class="home-header-brand-col">
+    <button
+      type="button"
+      class="home-menu-btn -ml-1 shrink-0 rounded-lg p-2 text-gray-300 transition-colors hover:bg-zinc-800 hover:text-white lg:hidden"
+      (click)="onMobileMenuClick()"
+      [attr.aria-expanded]="mobileSidebarOpen()"
+      aria-controls="app-sidebar"
+      [attr.aria-label]="mobileSidebarOpen() ? 'Close menu' : 'Open menu'"
+    >
+      @if (mobileSidebarOpen()) {
+        <app-icon name="close" size="lg" />
+      } @else {
+        <app-icon name="menu" size="lg" />
+      }
+    </button>
+
+    <a
+      routerLink="/dashboard"
+      class="home-header-brand ml-0.5 flex shrink-0 items-center no-underline"
+      [ngClass]="sidebarCollapsed() ? 'lg:ml-0 lg:w-full lg:justify-center' : 'lg:ml-[var(--ql-shell-brand-inset-start)]'"
+      aria-label="QuantoLite home"
+    >
+      @if (sidebarCollapsed()) {
+        <img
+          src="/asserts/Q.png"
+          alt="QuantoLite"
+          class="home-header-brand-mark"
+        />
+      } @else {
+        <img
+          src="/quanto-logo.png"
+          alt="QuantoLite"
+          class="block h-9 max-w-[min(16rem,48vw)] object-contain object-left max-md:h-6 max-md:max-w-[min(7.5rem,36vw)] xl:h-10 xl:max-w-[min(16rem,36vw)]"
+        />
+      }
+    </a>
+  </div>
+
+  <div class="home-header-center-col home-header-center-col--solo">
+    <div class="home-header-center-inner home-header-center-inner--solo">
+      <div
+        class="home-header-search-wrap"
+        [ngClass]="{ 'is-open': searchFocused() }"
+        role="search"
+      >
+        <label class="sr-only" for="app-global-search">Search</label>
+        <div class="home-header-search-bar">
+          <app-icon name="search-outline" size="lg" class="home-header-search-icon" />
+          <input
+            id="app-global-search"
+            class="home-header-search-input"
+            type="search"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Search screens…"
+            (focus)="searchFocused.set(true)"
+            (blur)="searchFocused.set(false)"
+          />
+          <button type="button" class="home-header-search-kbd" aria-label="Focus search (Ctrl+K)">
+            <kbd>Ctrl</kbd>
+            <kbd>K</kbd>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-header-actions-col">
+    <button type="button" class="relative text-gray-300 transition-colors hover:text-white" aria-label="Notifications">
+      <app-icon name="bell" size="lg" />
+      <span
+        class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white"
+      >
+        1
+      </span>
+    </button>
+
+    <div class="home-header-profile">
+      <button
+        type="button"
+        class="home-header-profile-btn flex cursor-pointer items-center rounded-xl py-1 pl-1 transition-colors"
+        style="background-color: var(--ql-shell-profile-pill-bg)"
+        [attr.aria-expanded]="profileOpen()"
+        aria-haspopup="true"
+        aria-label="Account menu"
+        (click)="toggleProfile(); $event.stopPropagation()"
+      >
+        <div
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold"
+          style="background-color: var(--ql-shell-profile-accent-bg); color: var(--ql-shell-profile-accent-text)"
+        >
+          {{ initials() }}
+        </div>
+        <div class="home-header-profile-text flex items-center gap-2 text-left">
+          <div class="flex min-w-0 flex-col">
+            <span
+              class="max-w-[10rem] truncate text-ui font-semibold leading-tight sm:max-w-xs"
+              style="color: var(--ql-shell-profile-accent-text)"
+            >
+              {{ displayName() }}
+            </span>
+            <span class="truncate text-ui-sm leading-tight" style="color: var(--ql-shell-profile-accent-muted)">
+              {{ displayRole() }}
+            </span>
+          </div>
+        <app-icon
+            name="chevron-down"
+            size="xs"
+            class="shrink-0 self-center transition-transform duration-200"
+            [svgClass]="profileOpen() ? 'rotate-180' : ''"
+          />
+        </div>
+      </button>
+
+      @if (profileOpen()) {
+        <div
+          class="home-header-profile-menu overflow-hidden rounded-xl border border-zinc-600 bg-zinc-800 py-1 shadow-xl"
+          role="menu"
+        >
+          <div class="border-b border-zinc-600 px-4 py-3">
+            <p class="text-xs font-medium uppercase tracking-wide text-zinc-400">Account</p>
+            <p class="mt-1 truncate text-xs font-semibold text-white">{{ displayName() }}</p>
+            <p class="mt-0.5 text-xs text-zinc-500">Signed in</p>
+          </div>
+
+          <button
+            type="button"
+            role="menuitem"
+            class="home-header-profile-item flex w-full flex-col items-start gap-0.5 px-4 py-2.5 text-left transition-colors hover:bg-zinc-700/80"
+            (click)="openContextDialog()"
+          >
+            <span class="text-xs font-semibold text-zinc-200">Organisation</span>
+            <span class="max-w-full truncate text-xs text-zinc-500">{{ contextCompanyLabel() }}</span>
+          </button>
+
+          <button
+            type="button"
+            role="menuitem"
+            class="home-header-profile-item flex w-full flex-col items-start gap-0.5 px-4 py-2.5 text-left transition-colors hover:bg-zinc-700/80"
+            (click)="openContextDialog()"
+          >
+            <span class="text-xs font-semibold text-zinc-200">Location</span>
+            <span class="max-w-full truncate text-xs text-zinc-500">{{ contextLocationLabel() }}</span>
+          </button>
+
+          <button
+            type="button"
+            role="menuitem"
+            class="home-header-profile-item flex w-full flex-col items-start gap-0.5 border-b border-zinc-600 px-4 py-2.5 text-left transition-colors hover:bg-zinc-700/80"
+            (click)="openContextDialog()"
+          >
+            <span class="text-xs font-semibold text-zinc-200">Counter</span>
+            <span class="max-w-full truncate text-xs text-zinc-500">{{ contextCounterLabel() }}</span>
+          </button>
+
+          <button
+            type="button"
+            role="menuitem"
+            class="flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs text-zinc-200 transition-colors hover:bg-zinc-700/80"
+            (click)="logout()"
+          >
+            Logout
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+@if (contextDialogOpen()) {
+  <div
+    class="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4"
+    role="presentation"
+    (click)="closeContextDialog()"
+  >
+    <div
+      class="flex w-full max-w-md flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-xl"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Select work context"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="border-b border-border px-5 py-4">
+        <h2 class="m-0 text-ui font-bold text-foreground">Work context</h2>
+        <p class="mt-1 text-ui-sm text-muted">
+          Select organisation, location, and counter for this session.
+        </p>
+      </header>
+
+      @if (isLoadingContext()) {
+        <p class="px-5 py-8 text-center text-ui-sm text-muted">Loading…</p>
+      } @else {
+        <form
+          #contextForm="ngForm"
+          class="flex flex-col gap-4 px-5 py-4"
+          (ngSubmit)="saveContext(contextForm)"
+        >
+          <app-dropdown
+            name="companyid"
+            [(ngModel)]="dialogDraft.companyid"
+            (ngModelChange)="onDialogCompanyChange($event)"
+            label="Organisation"
+            [items]="companyItems()"
+            bindLabel="name"
+            bindValue="id"
+            placeholder="Select organisation…"
+            [required]="true"
+            [searchable]="true"
+            [clearable]="false"
+          />
+
+          <app-dropdown
+            name="locationid"
+            [(ngModel)]="dialogDraft.locationid"
+            (ngModelChange)="onDialogLocationChange($event)"
+            label="Location"
+            [items]="locationItems()"
+            bindLabel="name"
+            bindValue="id"
+            placeholder="Select location…"
+            [required]="true"
+            [searchable]="true"
+            [clearable]="false"
+            [disabled]="dialogDraft.companyid == null"
+          />
+
+          <app-dropdown
+            name="counterid"
+            [(ngModel)]="dialogDraft.counterid"
+            (ngModelChange)="onDialogCounterChange($event)"
+            label="Counter"
+            [items]="counterItems()"
+            bindLabel="name"
+            bindValue="id"
+            placeholder="Select counter…"
+            [required]="true"
+            [searchable]="true"
+            [clearable]="false"
+            [disabled]="dialogDraft.locationid == null"
+          />
+
+          <div class="rounded-lg border border-border bg-background px-3 py-2">
+            <p class="text-ui-sm text-muted">
+              Current:
+              <span class="font-medium text-foreground">
+                {{ contextCompanyLabel() }} · {{ contextLocationLabel() }} · {{ contextCounterLabel() }}
+              </span>
+            </p>
+          </div>
+
+          <div class="flex justify-end gap-2 border-t border-border pt-4">
+            <app-button
+              variant="outline"
+              size="sm"
+              [disabled]="isSavingContext()"
+              (clicked)="closeContextDialog()"
+            >
+              Close
+            </app-button>
+            <app-button
+              variant="primary"
+              size="sm"
+              [loading]="isSavingContext()"
+              (clicked)="contextForm && saveContext(contextForm)"
+            >
+              {{ isSavingContext() ? 'Saving…' : 'Select' }}
+            </app-button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+}

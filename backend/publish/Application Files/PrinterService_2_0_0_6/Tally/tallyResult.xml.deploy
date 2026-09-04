@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ENVELOPE>
+	- <HEADER>
+		<VERSION>1</VERSION>
+		<STATUS>1</STATUS>
+	</HEADER>
+	- <BODY>
+		- <DATA>
+			- <IMPORTRESULT>
+				<LINEERROR>22: Group 'test' does not exist!(FOR OBJECT: 'Ct Scan')</LINEERROR>
+				<CREATED>0</CREATED>
+				<ALTERED>0</ALTERED>
+				<LASTVCHID>0</LASTVCHID>
+				<LASTMID>0</LASTMID>
+				<COMBINED>0</COMBINED>
+				<IGNORED>0</IGNORED>
+				<ERRORS>1</ERRORS>
+			</IMPORTRESULT>
+		</DATA>
+	</BODY>
+</ENVELOPE>

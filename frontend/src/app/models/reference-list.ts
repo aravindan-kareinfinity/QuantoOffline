@@ -1,0 +1,307 @@
+export class ReferenceList {
+  id = 0;
+  type = '';
+  code = '';
+  name = '';
+  sortingindex = 0;
+  isactive = true;
+  version = 0;
+  locationid = 0;
+  referenceid = 0;
+  productgroup = 0;
+  additionalinfo?: ReferenceListAdditionalInfo | null;
+  ErrorMessage?: string;
+}
+
+export type ReferenceListAdditionalInfo = Record<string, unknown> & {
+  parentid?: number;
+  address?: string;
+  cityname?: string;
+  statename?: string;
+  countryname?: string;
+  inheritgstfromparent?: boolean;
+  iswarehouse?: boolean;
+  locationid?: number;
+  floorid?: number;
+  printconfigid?: number;
+  disabled?: boolean;
+  autosettlement?: boolean;
+  isonline?: boolean;
+  locationconfig?: {
+    pincode?: string;
+    gst?: string;
+    cityid?: number;
+    stateid?: number;
+  };
+};
+
+export class ReferenceListSearchReq {
+  id = 0;
+  type = '';
+  code = '';
+  name = '';
+  inactive = false;
+}
+
+export class ReferenceListCriteria {
+  id = 0;
+  type = '';
+  code = '';
+  name = '';
+  parentid = 0;
+  inactive = false;
+}
+
+export const REFERENCE_LIST_PRODUCT_TYPES = {
+  SIZE: 'SIZE',
+  SIZEGROUP: 'SIZEGROUP',
+  PATTERN: 'PATTERN',
+  STYLE: 'STYLE',
+  TYPE: 'TYPE',
+  COLOUR: 'COLOUR',
+  MATERIAL: 'MATERIAL',
+  SLEEVE: 'SLEEVE',
+  FIT: 'FIT',
+  MARKER: 'MARKER',
+  AGESET: 'AGESET',
+  UNITS: 'UNITS',
+  PRODUCTGROUPS: 'PRODUCTGROUPS',
+  PRODUCTHIERARCHY: 'PRODUCTHIERARCHY',
+  SUPPLIERGROUP: 'SUPPLIERGROUP',
+  CUSTOMERGROUP: 'CUSTOMERGROUP',
+  BUYERSGROUP: 'BUYERSGROUP',
+  BARCODEID: 'BARCODEID',
+  DIVISION: 'DIVISION',
+  PRODUCTDIVISION: 'PRODUCTDIVISION',
+  ITEMGROUPS: 'ITEMGROUPS',
+  PRICETAGS: 'PRICETAGS',
+  SELLINGNAMES: 'SELLINGNAMES',
+  PRODUCTCOVERAGE: 'PRODUCTCOVERAGE',
+  DAILYPRICEGROUP: 'DAILYPRICEGROUP',
+  COREPRODUCTGROUP: 'COREPRODUCTGROUP',
+  DUMPINGGROUP: 'DUMPINGGROUP',
+  CUSTOMFIELDS: 'CUSTOMFIELDS',
+  BRAND: 'BRAND',
+} as const;
+
+export const REFERENCE_LIST_GENERAL_TYPES = {
+  LOCATION: 'LOCATION',
+  COUNTER: 'COUNTER',
+  TAILORINGUNIT: 'TAILORINGUNIT',
+  PRFRESON: 'PRFRESON',
+  RETURNREASON: 'RETURNREASON',
+  BULKSALEREASON: 'BULKSALEREASON',
+  SEASONS: 'SEASONS',
+  POTYPE: 'POTYPE',
+  SETTINGS: 'SETTINGS',
+  BANK: 'BANK',
+  SWIPPINGMACINE: 'SWIPPINGMACINE',
+  CARDTYPES: 'CARDTYPES',
+  COURIERTYPE: 'COURIERTYPE',
+  AREA: 'AREA',
+  DISCOUNTREMARK: 'DISCOUNTREMARK',
+  AREAGROUP1: 'AREAGROUP1',
+  AREAGROUP2: 'AREAGROUP2',
+  PRIORITY: 'PRIORITY',
+  CITY: 'CITY',
+  FULL_PRODUCTGROUPS: 'FULL_PRODUCTGROUPS',
+  DISTRICT: 'DISTRICT',
+  STATE: 'STATE',
+  EXPENSESTYPE: 'EXPENSESTYPE',
+  CUSTOMERCATEGORY: 'CUSTOMERCATEGORY',
+  VENDOR: 'VENDOR',
+  OFFLINECLIENT: 'OFFLINECLIENT',
+  AUTONUMBER: 'AUTONUMBER',
+  LOANPROVIDER: 'LOANPROVIDER',
+  DELIVERYLOCATION: 'DELIVERYLOCATION',
+  ADDITIONALCHARGES: 'ADDITIONALCHARGES',
+  UPIPROVIDER: 'UPIPROVIDER',
+  JOBCHARGE: 'JOBCHARGE',
+  TAILORINGCHARGE: 'TAILORINGCHARGE',
+  BUNDLERACK: 'BUNDLERACK',
+  BILLIMPORT: 'BILLIMPORT',
+  SUPPLIERGROUP: 'SUPPLIERGROUP',
+  VOUCHERTYPE: 'VOUCHERTYPE',
+  BUYERSGROUP: 'BUYERSGROUP',
+  CUSTOMERGROUP: 'CUSTOMERGROUP',
+  LEADEVENT: 'LEADEVENT',
+  LEADSTATUS: 'LEADSTATUS',
+  LEADPRIORITY: 'LEADPRIORITY',
+  ASSETTYPE: 'ASSETTYPE',
+  FOODCOUNTER: 'FOODCOUNTER',
+  DOCTYPE: 'DOCTYPE',
+  REGSOURCE: 'REGSOURCE',
+  REGVIST: 'REGVIST',
+  PURCHASETYPE: 'PURCHASETYPE',
+  ADDRESSTYPE: 'ADDRESSTYPE',
+  TDSGROUP: 'TDSGROUP',
+  PERSONS: 'PERSONS',
+  COUNTRY: 'COUNTRY',
+} as const;
+
+export const REFERENCE_LIST_HR_TYPES = {
+  LEAVETYPE: 'LEAVETYPE',
+  DESIGNATION: 'DESIGNATION',
+  DIVISION: 'DIVISION',
+  FLOOR: 'FLOOR',
+  EDUCATIONTYPE: 'EDUCATIONTYPE',
+  SETTINGS: 'SETTINGS',
+  PAYCATEGORY: 'PAYCATEGORY',
+  SPECIALPAYMENT: 'SPECIALPAYMENT',
+  ROLE: 'ROLE',
+  WORKINGHOURS: 'WORKINGHOURS',
+  USERROLE: 'USERROLE',
+  DEPARTMENT: 'DEPARTMENT',
+  CASTE: 'CASTE',
+  COMMUNITY: 'COMMUNITY',
+  BLOODGROUP: 'BLOODGROUP',
+  CITY: 'CITY',
+  DISTRICT: 'DISTRICT',
+  STATE: 'STATE',
+  COUNTRY: 'COUNTRY',
+  PORT: 'PORT',
+  RELIGION: 'RELIGION',
+  PERSONS: 'PERSONS',
+} as const;
+
+export const REFERENCE_LIST_MGR_TYPES = {
+  BOMCATEGORY: 'BOMCATEGORY',
+  UOM: 'UOM',
+  SIZE: 'SIZE',
+  SIZEGROUP: 'SIZEGROUP',
+  PATTERN: 'PATTERN',
+  STYLE: 'STYLE',
+  TYPE: 'TYPE',
+  COLOUR: 'COLOUR',
+  MATERIAL: 'MATERIAL',
+  SLEEVE: 'SLEEVE',
+  FIT: 'FIT',
+  DELIVERYLOCATION: 'DELIVERYLOCATION',
+  JOBCHARGE: 'JOBCHARGE',
+  MFRDEPARTMENT: 'MFRDEPARTMENT',
+  MFRJOBREASON: 'MFRJOBREASON',
+  FABRIC: 'FABRIC',
+  MFGSTAGES: 'MFGSTAGES',
+  MFGSAMPLESTATUS: 'MFGSAMPLESTATUS',
+  MFGSAMPLEQUALITY: 'MFGSAMPLEQUALITY',
+  MFGPRDFORM: 'MFGPRDFORM',
+  MFGPRDMACHINE: 'MFGPRDMACHINE',
+  SEASON: 'SEASON',
+  PRODUCTDIVISION: 'PRODUCTDIVISION',
+  CLASSIFICATION: 'CLASSIFICATION',
+} as const;
+
+export const REFERENCE_LIST_POS_TYPES = {
+  POSCATEGORY: 'POSCATEGORY',
+  POSSUBCATEGORY: 'POSSUBCATEGORY',
+  POSBRAND: 'POSBRAND',
+} as const;
+
+export const REFERENCE_LIST_READ_SEGMENTS = {
+  ALLLOCATION: 'ALLLOCATION',
+  'FULL-LOCATION': 'FULL-LOCATION',
+  WHLOCATION: 'WHLOCATION',
+  RETAILLOCATION: 'RETAILLOCATION',
+  BUYINGCOMPANY: 'BUYINGCOMPANY',
+  FULLCOMPANY: 'FULLCOMPANY',
+  COMPANY: 'COMPANY',
+  BRAND: 'BRAND',
+  PRODUCTS: 'PRODUCTS',
+  ALLPRODUCTS: 'ALLPRODUCTS',
+  SUPPLIER: 'SUPPLIER',
+  SUPPLIERCOMPANY: 'SUPPLIERCOMPANY',
+  EMPLOY: 'EMPLOY',
+  IEMPLOY: 'IEMPLOY',
+  ALLTAX: 'ALLTAX',
+  SALESTAX: 'SALESTAX',
+  PURCHASETAX: 'PURCHASETAX',
+  CESSTAX: 'CESSTAX',
+  TRANSPORT: 'TRANSPORT',
+  AGENT: 'AGENT',
+  SIZEGROUPLIST: 'SIZEGROUPLIST',
+  USERLIST: 'USERLIST',
+  LOCATION: 'LOCATION',
+} as const;
+
+export type ReferenceListProductType =
+  (typeof REFERENCE_LIST_PRODUCT_TYPES)[keyof typeof REFERENCE_LIST_PRODUCT_TYPES];
+export type ReferenceListGeneralType =
+  (typeof REFERENCE_LIST_GENERAL_TYPES)[keyof typeof REFERENCE_LIST_GENERAL_TYPES];
+export type ReferenceListHrType =
+  (typeof REFERENCE_LIST_HR_TYPES)[keyof typeof REFERENCE_LIST_HR_TYPES];
+export type ReferenceListMgrType =
+  (typeof REFERENCE_LIST_MGR_TYPES)[keyof typeof REFERENCE_LIST_MGR_TYPES];
+export type ReferenceListPosType =
+  (typeof REFERENCE_LIST_POS_TYPES)[keyof typeof REFERENCE_LIST_POS_TYPES];
+
+export type ReferenceListMasterType =
+  | ReferenceListProductType
+  | ReferenceListGeneralType
+  | ReferenceListHrType
+  | ReferenceListMgrType
+  | ReferenceListPosType;
+
+export type ReferenceListReadSegment =
+  (typeof REFERENCE_LIST_READ_SEGMENTS)[keyof typeof REFERENCE_LIST_READ_SEGMENTS];
+
+export type ReferenceListTypeCode = ReferenceListMasterType | ReferenceListReadSegment | string;
+
+export class ProductAttributeFormModel {
+  typeCode = '';
+  code = '';
+  name = '';
+  sortingindex = 10;
+  isactive = true;
+}
+
+export class ProductCategoryFormModel {
+  code = '';
+  name = '';
+  sortingindex = 10;
+  isactive = true;
+}
+
+export const PRODUCT_ATTRIBUTE_TYPES = [
+  REFERENCE_LIST_PRODUCT_TYPES.SIZE,
+  REFERENCE_LIST_PRODUCT_TYPES.BRAND,
+  REFERENCE_LIST_PRODUCT_TYPES.PATTERN,
+  REFERENCE_LIST_PRODUCT_TYPES.STYLE,
+  REFERENCE_LIST_PRODUCT_TYPES.TYPE,
+  REFERENCE_LIST_PRODUCT_TYPES.COLOUR,
+  REFERENCE_LIST_PRODUCT_TYPES.MATERIAL,
+  REFERENCE_LIST_PRODUCT_TYPES.SLEEVE,
+  REFERENCE_LIST_PRODUCT_TYPES.FIT,
+  REFERENCE_LIST_PRODUCT_TYPES.UNITS,
+  REFERENCE_LIST_PRODUCT_TYPES.PRODUCTGROUPS,
+  REFERENCE_LIST_PRODUCT_TYPES.DIVISION,
+] as const satisfies readonly ReferenceListProductType[];
+
+export type ProductAttributeType = (typeof PRODUCT_ATTRIBUTE_TYPES)[number];
+
+export const PRODUCT_ATTRIBUTE_LABELS: Record<ProductAttributeType, string> = {
+  SIZE: 'Size',
+  BRAND: 'Brand',
+  PATTERN: 'Pattern',
+  STYLE: 'Style',
+  TYPE: 'Type',
+  COLOUR: 'Color',
+  MATERIAL: 'Material',
+  SLEEVE: 'Sleeve',
+  FIT: 'Fit',
+  UNITS: 'Units',
+  PRODUCTGROUPS: 'Product Category',
+  DIVISION: 'Section',
+};
+
+export type ProductAttributeCategory = {
+  id: number;
+  code: ProductAttributeType;
+  name: string;
+};
+
+export const PRODUCT_ATTRIBUTE_CATEGORIES: ProductAttributeCategory[] =
+  PRODUCT_ATTRIBUTE_TYPES.map((code, index) => ({
+    id: index + 1,
+    code,
+    name: PRODUCT_ATTRIBUTE_LABELS[code],
+  }));

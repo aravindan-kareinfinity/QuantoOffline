@@ -1,0 +1,111 @@
+<div class="login-shell bg-[#2d3035] text-white">
+  <div class="login-inner">
+    <div class="mx-auto grid w-full max-w-6xl gap-6 px-6 py-4 md:grid-cols-2 md:gap-8 md:py-6">
+      <div class="hidden min-h-0 flex-col justify-center md:flex">
+        <div class="mb-8">
+          <img
+            src="/quanto-logo.png"
+            alt="QuantoLite"
+            class="h-auto w-full max-w-[12.9rem] object-contain object-left"
+          />
+        </div>
+
+        <h2 class="mb-6 text-5xl font-semibold leading-tight">
+          Built for retail.<br />
+          <span class="text-emerald-400">Ready for growth.</span>
+        </h2>
+
+        <p class="max-w-md text-lg text-gray-400">
+          Powerful multi-store retail management platform. Start your journey with complete
+          organization &amp; store setup from Day 1.
+        </p>
+
+        <div class="mt-6 md:mt-8">
+          <p class="mb-3 text-sm text-gray-500">Need assistance?</p>
+          <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-400">
+            <span>+91 800 123 4567</span>
+            <span>hello&#64;quanto.in</span>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="login-card mx-auto w-full min-h-0 max-w-md rounded-3xl bg-white p-6 text-gray-900 shadow-2xl md:p-8"
+      >
+        <h3 class="mb-2 text-2xl font-semibold">Sign in to QuantoLite</h3>
+        <p class="mb-5 text-gray-500 md:mb-6">Welcome back! Let's manage your stores.</p>
+
+        <form #loginForm="ngForm" class="space-y-5" (ngSubmit)="login(loginForm)">
+          <app-text-input
+            name="username"
+            [(ngModel)]="draft.username"
+            label="Email or Username"
+            inputId="login-username"
+            placeholder="hello@yourstore.com"
+            autocomplete="username"
+            required
+            minlength="3"
+          />
+
+          <app-text-input
+            name="password"
+            [(ngModel)]="draft.password"
+            label="Password"
+            inputId="login-password"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+            minlength="6"
+          />
+
+   
+
+          <div class="flex items-center justify-between gap-4">
+            <label class="flex cursor-pointer select-none items-center gap-2 text-sm text-gray-600">
+              <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-info" />
+              Remember me
+            </label>
+            <span class="shrink-0 text-sm text-gray-400">Forgot password?</span>
+          </div>
+
+          <app-button
+            type="submit"
+            variant="primary"
+            [fullWidth]="true"
+            [loading]="isSubmitting()"
+            class="login-submit"
+          >
+            Sign In
+          </app-button>
+        </form>
+
+        <div class="mt-5 md:mt-6">
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-gray-200"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="bg-white px-4 text-gray-500">or sign in with</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl border border-gray-300 py-4 font-semibold text-gray-900 transition-colors hover:border-gray-400 hover:bg-gray-50"
+            aria-label="Sign in with Google"
+          >
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+              alt=""
+              class="h-5 w-5 shrink-0"
+              width="20"
+              height="20"
+            />
+            <span>Google</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

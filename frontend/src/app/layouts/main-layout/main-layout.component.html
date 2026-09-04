@@ -1,0 +1,40 @@
+<div
+  class="flex h-screen min-h-0 flex-col overflow-hidden"
+  style="background-color: var(--ql-shell-chrome-bg)"
+>
+  <app-header
+    [sidebarCollapsed]="sidebarCollapsed()"
+    [mobileSidebarOpen]="mobileSidebarOpen()"
+    (mobileMenuToggle)="toggleMobileSidebar()"
+  />
+
+  <div
+    class="flex min-h-0 flex-1 overflow-hidden"
+    style="background-color: var(--ql-shell-chrome-bg)"
+  >
+    @if (mobileSidebarOpen()) {
+      <button
+        type="button"
+        class="fixed inset-x-0 bottom-0 z-30 border-0 bg-black/45 p-0 lg:hidden"
+        style="top: var(--ql-shell-header-height)"
+        aria-label="Close menu"
+        (click)="closeMobileSidebar()"
+      ></button>
+    }
+
+    <app-sidebar
+      [collapsed]="sidebarCollapsed()"
+      [mobileOpen]="mobileSidebarOpen()"
+      (collapseToggle)="toggleSidebar()"
+      (navigate)="closeMobileSidebar()"
+    />
+
+    <main
+      class="mb-1 ml-1 mr-1 mt-1 min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl bg-surface shadow-sm sm:mb-3 sm:ml-3 sm:mr-3 sm:mt-1.5"
+    >
+      <div class="flex h-full min-h-0 flex-1 flex-col overflow-auto">
+        <router-outlet />
+      </div>
+    </main>
+  </div>
+</div>

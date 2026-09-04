@@ -1,0 +1,214 @@
+@import 'tailwindcss';
+@import '@ng-select/ng-select/themes/default.theme.css';
+@import './styles/theme.css';
+
+html {
+  font-size: 15px;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+
+/* font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  font-weight: 500; */
+  font-family: var(--font-sans);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/** Forward `text-ui*` from `app-button` host to the inner control. */
+app-button.text-ui > button {
+  font-size: var(--text-ui) !important;
+  line-height: var(--text-ui--line-height) !important;
+}
+
+app-button.text-ui-sm > button {
+  font-size: var(--text-ui-sm);
+  line-height: var(--text-ui-sm--line-height);
+}
+
+/** Shared master form controls (match company form). */
+.ql-form-textarea {
+  min-height: calc(37px * 2 + 0.5rem);
+  width: 100%;
+  resize: vertical;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-form-input-border);
+  background-color: var(--color-surface);
+  padding: 0.5rem 0.75rem;
+  font-size: var(--text-ui-sm);
+  line-height: 1.375;
+  color: var(--color-foreground);
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.ql-form-textarea::placeholder {
+  font-size: var(--text-ui-sm);
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.ql-form-textarea:hover {
+  border-color: var(--color-form-input-border-hover);
+}
+
+.ql-form-textarea:focus {
+  border-color: var(--color-form-focus-border);
+  box-shadow: 0 0 0 3px var(--color-form-focus-ring);
+}
+
+.ql-form-date-input {
+  height: 2.5rem;
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-form-input-border);
+  background-color: var(--color-surface);
+  padding: 0 0.75rem;
+  font-size: var(--text-ui-sm);
+  color: var(--color-foreground);
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.ql-form-date-input:hover {
+  border-color: var(--color-form-input-border-hover);
+}
+
+.ql-form-date-input:focus {
+  border-color: var(--color-form-focus-border);
+  box-shadow: 0 0 0 3px var(--color-form-focus-ring);
+}
+
+.ql-form-readonly-value {
+  margin: 0;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-form-input-border);
+  background-color: var(--color-surface);
+  padding: 0.5rem 0.75rem;
+  font-size: var(--text-ui-sm);
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+/** Form screen header subtitle — hidden on mobile. */
+.ql-form-header-desc {
+  @apply mt-[0.2rem] hidden text-ui-sm leading-snug text-muted sm:block;
+}
+
+/** Form section left-column helper — hidden on mobile. */
+.ql-form-section-desc {
+  @apply mt-1 hidden text-ui-sm leading-snug text-muted md:block;
+}
+
+/** Purchase entry grid — editable vs read-only cell styling. */
+.ql-pe-grid .ql-pe-readonly-header {
+  background-color: var(--color-grid-header) !important;
+}
+
+.ql-pe-grid .ql-pe-editable-header {
+  background-color: color-mix(in srgb, var(--color-accent) 14%, var(--color-grid-header)) !important;
+  color: var(--color-foreground);
+}
+
+.ql-pe-grid .ql-pe-readonly-cell {
+  background-color: var(--color-grid-header);
+  color: var(--color-foreground);
+}
+
+.ql-pe-grid .ql-pe-calculated {
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+.ql-pe-grid .ql-pe-editable-cell {
+  background-color: var(--color-form-body);
+  border: 1px solid var(--color-form-input-border);
+  border-radius: 0.375rem;
+  box-shadow: inset 0 1px 2px rgb(15 23 42 / 0.04);
+  margin: 3px 4px;
+  padding-left: 0.375rem !important;
+  padding-right: 0.375rem !important;
+}
+
+.ql-pe-grid .ql-pe-editable-cell:focus-within,
+.ql-pe-grid .ag-cell-focus.ql-pe-editable-cell {
+  border-color: var(--color-form-focus-border);
+  box-shadow: 0 0 0 2px var(--color-form-focus-ring);
+  background-color: var(--color-surface);
+}
+
+/** Price changer grid — flat editable cells (no inset input boxes). */
+.ql-pc-grid .ql-pc-readonly-header {
+  background-color: var(--color-grid-header) !important;
+}
+
+.ql-pc-grid .ql-pc-editable-header {
+  background-color: color-mix(in srgb, var(--color-accent) 12%, var(--color-grid-header)) !important;
+  color: var(--color-foreground);
+}
+
+.ql-pc-grid .ql-pc-readonly-cell {
+  background-color: color-mix(in srgb, var(--color-grid-header) 55%, var(--color-surface));
+  color: var(--color-muted);
+}
+
+.ql-pc-grid .ql-pc-editable-cell {
+  background-color: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+}
+
+.ql-pc-grid .ql-pc-editable-cell.ag-cell-focus,
+.ql-pc-grid .ql-pc-editable-cell:focus-within {
+  background-color: var(--color-surface);
+  box-shadow: inset 0 0 0 2px var(--color-form-focus-border);
+}
+
+.ql-pc-grid .ag-cell-inline-editing {
+  background-color: var(--color-surface) !important;
+  box-shadow: inset 0 0 0 2px var(--color-form-focus-border);
+  padding: 0 !important;
+}
+
+.ql-pc-grid .ag-cell-editor,
+.ql-pc-grid .ag-cell-editor input {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font: inherit;
+  color: inherit;
+  padding-left: var(--ag-cell-horizontal-padding, 12px);
+  padding-right: var(--ag-cell-horizontal-padding, 12px);
+}
+
+/** Screen grids fill their flex host. */
+ag-grid-angular {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+

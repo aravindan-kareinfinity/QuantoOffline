@@ -1,0 +1,221 @@
+<div class="flex w-full flex-col gap-1.5">
+  @if (label()) {
+    <label [attr.for]="inputId()" class="text-ui-sm font-medium text-foreground">
+      {{ label() }}
+      @if (required()) {
+        <span class="text-danger" aria-hidden="true">*</span>
+      }
+    </label>
+  }
+
+  <button
+    #triggerBtn
+    type="button"
+    class="ql-date-picker-trigger flex h-[37px] w-full items-center gap-2 rounded-lg border bg-surface px-3 text-left transition-[border-color,box-shadow] disabled:cursor-not-allowed disabled:bg-form-subtle-bg"
+    [class.border-form-input-border]="!displayError()"
+    [class.border-danger]="!!displayError()"
+    [class.text-muted]="!displayText()"
+    [class.text-foreground]="!!displayText()"
+    [id]="inputId()"
+    [disabled]="isDisabled()"
+    [attr.aria-expanded]="panelOpen()"
+    [attr.aria-haspopup]="'dialog'"
+    [attr.aria-invalid]="displayError() ? true : null"
+    [attr.aria-describedby]="describedBy()"
+    (click)="togglePanel()"
+  >
+    <span class="min-w-0 flex-1 truncate text-ui-sm">
+      {{ displayText() || placeholder() }}
+    </span>
+    <app-icon name="calendar" size="sm" class="shrink-0 text-muted" />
+  </button>
+
+  @if (displayError() && !hideErrorMessage()) {
+    <p [id]="inputId() + '-error'" class="text-ui-sm text-danger" role="alert">
+      {{ displayError() }}
+    </p>
+  } @else if (hint()) {
+    <p [id]="inputId() + '-hint'" class="text-ui-sm text-muted">
+      {{ hint() }}
+    </p>
+  }
+</div>
+
+@if (panelOpen()) {
+  <div
+    class="ql-date-picker-panel fixed z-[80] w-[16.75rem] overflow-hidden rounded-xl border border-border bg-surface p-2.5 shadow-lg"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="label() || 'Choose date'"
+    [style.top.px]="panelTop()"
+    [style.left.px]="panelLeft()"
+    (click)="$event.stopPropagation()"
+  >
+    @if (panelMode() === 'days') {
+      <div class="mb-1.5 flex items-center justify-between gap-1">
+        <div class="flex items-center gap-0.5">
+          <button
+            type="button"
+            class="flex h-7 w-7 items-center justify-center rounded-md border border-form-input-border bg-surface text-foreground transition-colors hover:bg-form-subtle-bg"
+            aria-label="Previous year"
+            (click)="previousYear()"
+          >
+            <app-icon name="chevrons-left" size="sm" />
+          </button>
+          <button
+            type="button"
+            class="flex h-7 w-7 items-center justify-center rounded-md border border-form-input-border bg-surface text-foreground transition-colors hover:bg-form-subtle-bg"
+            aria-label="Previous month"
+            (click)="previousMonth()"
+          >
+            <app-icon name="chevron-left" size="sm" />
+          </button>
+        </div>
+
+        <div
+          class="flex items-center rounded-full bg-form-subtle-bg px-2 py-0.5 text-ui-xs font-semibold text-foreground"
+        >
+          <button
+            type="button"
+            class="rounded-full px-1.5 py-0.5 transition-colors hover:bg-surface"
+            (click)="showMonthPicker()"
+          >
+            {{ viewMonthLabel() }}
+          </button>
+          <button
+            type="button"
+            class="rounded-full px-1.5 py-0.5 transition-colors hover:bg-surface"
+            (click)="showYearPicker()"
+          >
+            {{ viewYear() }}
+          </button>
+        </div>
+
+        <div class="flex items-center gap-0.5">
+          <button
+            type="button"
+            class="flex h-7 w-7 items-center justify-center rounded-md border border-form-input-border bg-surface text-foreground transition-colors hover:bg-form-subtle-bg"
+            aria-label="Next month"
+            (click)="nextMonth()"
+          >
+            <app-icon name="chevron-right" size="sm" />
+          </button>
+          <button
+            type="button"
+            class="flex h-7 w-7 items-center justify-center rounded-md border border-form-input-border bg-surface text-foreground transition-colors hover:bg-form-subtle-bg"
+            aria-label="Next year"
+            (click)="nextYear()"
+          >
+            <app-icon name="chevrons-right" size="sm" />
+          </button>
+        </div>
+      </div>
+
+      <div class="mb-1 grid grid-cols-7 gap-0.5">
+        @for (weekday of ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']; track weekday) {
+          <span class="py-0.5 text-center text-[0.6875rem] font-medium text-muted">{{
+            weekday
+          }}</span>
+        }
+      </div>
+
+      <div class="grid grid-cols-7 gap-0.5">
+        @for (cell of calendarCells(); track cell.iso) {
+          <button
+            type="button"
+            class="flex h-7 w-full items-center justify-center rounded-md text-ui-xs font-medium transition-colors"
+            [class.text-muted]="!cell.inMonth && !isSelected(cell.iso)"
+            [class.text-foreground]="cell.inMonth && !isSelected(cell.iso)"
+            [class.bg-foreground]="isSelected(cell.iso)"
+            [class.text-surface]="isSelected(cell.iso)"
+            [class.hover:bg-form-subtle-bg]="!isSelected(cell.iso)"
+            [attr.aria-pressed]="isSelected(cell.iso)"
+            (click)="selectDate(cell.iso)"
+          >
+            {{ cell.day }}
+          </button>
+        }
+      </div>
+    } @else if (panelMode() === 'months') {
+      <div class="mb-2 flex items-center justify-between gap-1">
+        <button
+          type="button"
+          class="flex h-7 w-7 items-center justify-center rounded-md border border-form-input-border bg-surface text-foreground transition-colors hover:bg-form-subtle-bg"
+          aria-label="Previous year"
+          (click)="previousYear()"
+        >
+          <app-icon name="chevrons-left" size="sm" />
+        </button>
+
+        <button
+          type="button"
+          class="rounded-md px-1.5 py-0.5 text-ui-xs font-semibold text-foreground transition-colors hover:bg-form-subtle-bg"
+          (click)="showYearPicker()"
+        >
+          {{ viewYear() }}
+        </button>
+
+        <button
+          type="button"
+          class="flex h-7 w-7 items-center justify-center rounded-md border border-form-input-border bg-surface text-foreground transition-colors hover:bg-form-subtle-bg"
+          aria-label="Next year"
+          (click)="nextYear()"
+        >
+          <app-icon name="chevrons-right" size="sm" />
+        </button>
+      </div>
+
+      <div class="grid grid-cols-4 gap-1">
+        @for (month of monthOptions; track month.index) {
+          <button
+            type="button"
+            class="flex h-8 items-center justify-center rounded-md text-ui-xs font-medium text-foreground transition-colors hover:bg-form-subtle-bg"
+            [class.bg-form-subtle-bg]="isViewMonthSelected(month.index)"
+            [class.font-semibold]="isViewMonthSelected(month.index)"
+            (click)="selectMonth(month.index)"
+          >
+            {{ month.label }}
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="mb-2 flex items-center justify-between gap-1">
+        <button
+          type="button"
+          class="flex h-7 w-7 items-center justify-center rounded-md border border-form-input-border bg-surface text-foreground transition-colors hover:bg-form-subtle-bg"
+          aria-label="Previous years"
+          (click)="previousYearPage()"
+        >
+          <app-icon name="chevrons-left" size="sm" />
+        </button>
+
+        <span class="text-ui-xs font-semibold text-foreground">
+          {{ yearPageStart() }} – {{ yearPageEnd() }}
+        </span>
+
+        <button
+          type="button"
+          class="flex h-7 w-7 items-center justify-center rounded-md border border-form-input-border bg-surface text-foreground transition-colors hover:bg-form-subtle-bg"
+          aria-label="Next years"
+          (click)="nextYearPage()"
+        >
+          <app-icon name="chevrons-right" size="sm" />
+        </button>
+      </div>
+
+      <div class="grid grid-cols-4 gap-1">
+        @for (year of yearOptions(); track year) {
+          <button
+            type="button"
+            class="flex h-8 items-center justify-center rounded-md text-ui-xs font-medium text-foreground transition-colors hover:bg-form-subtle-bg"
+            [class.bg-form-subtle-bg]="isViewYearSelected(year)"
+            [class.font-semibold]="isViewYearSelected(year)"
+            (click)="selectYear(year)"
+          >
+            {{ year }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+}

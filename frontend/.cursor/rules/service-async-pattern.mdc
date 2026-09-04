@@ -1,0 +1,20 @@
+---
+description: Table services use async/await + firstValueFrom, POST body directly
+globs: frontend/src/app/services/**/*.ts
+alwaysApply: false
+---
+
+# Service pattern
+
+```ts
+async search(req: Partial<SearchReq> = {}): Promise<Item[]> {
+  return await firstValueFrom(
+    this.http.post<Item[]>(`${this.baseUrl}/Search`, req),
+  );
+}
+```
+
+- Return `Promise<T>` with `async` / `await` / `firstValueFrom`.
+- POST the entity or criteria directly (no `Item` envelope).
+- Do not wrap in `try/catch` that only rethrows — let errors reach the screen / HTTP interceptor.
+- Screens: `await this.companyService.search({})` then bind.

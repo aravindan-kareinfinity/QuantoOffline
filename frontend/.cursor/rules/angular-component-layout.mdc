@@ -1,0 +1,35 @@
+---
+description: Angular components must use the standard multi-file folder layout
+alwaysApply: true
+---
+
+# Angular component file layout
+
+Always create components as a folder with these four files (never inline `template` / `styles`):
+
+```text
+feature-name/
+  ├── feature-name.component.ts
+  ├── feature-name.component.html
+  ├── feature-name.component.scss
+  └── feature-name.component.spec.ts
+```
+
+## Rules
+
+- Use `templateUrl` and `styleUrl` (or `styleUrls`), not inline `template` / `styles`.
+- Prefer `standalone: true` unless an existing pattern differs.
+- Generate with CLI when possible: `ng g c path/to/name --standalone`
+- Do not put multiple unrelated components in one file.
+
+## `.component.ts` file order
+
+```text
+imports
+@Component({ … })
+export class … { … }
+```
+
+**Nothing between imports and `@Component`** except when unavoidable — then only `type` / `class` / `function` declarations (no `const` catalogs, no mapped data, no logic).
+
+Prefer row/view types in `models/*.ts` (e.g. `LocationTableRow` in `models/location.ts`) so the component file goes straight from imports to `@Component`.

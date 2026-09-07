@@ -442,14 +442,17 @@ namespace InfyPOS.Processors
                             {
                                 if (string.IsNullOrWhiteSpace(item.barcode))
                                     continue;
-                                if (!TryValidateAndDeductStock(item.barcode, item.qty, out var stockError))
+                                // Match local MASTER SaveBill: unknown / AutoBarcode lines are allowed.
+                                // Only deduct when a real stock row with a qty column exists.
+                                if (!TryValidateAndDeductStock(item.barcode, item.qty, out var deducted, out var stockError))
                                 {
                                     result.error = true;
                                     result.errormessage = stockError;
                                     result.completed = true;
                                     return result;
                                 }
-                                stockChanged = true;
+                                if (deducted)
+                                    stockChanged = true;
                             }
                         }
 
@@ -578,13 +581,18 @@ namespace InfyPOS.Processors
             }
         }
 
-        private bool TryValidateAndDeductStock(string barcode, decimal qty, out string error)
+        /// <summary>
+        /// Same rules as local MASTER billing: AutoBarcode / missing stock rows still allow the bill.
+        /// When a stock row has a qty column, deduct (and fail only if insufficient).
+        /// </summary>
+        private bool TryValidateAndDeductStock(string barcode, decimal qty, out bool deducted, out string error)
         {
+            deducted = false;
             error = null;
             if (Stocks == null)
             {
-                error = "MASTER stock is not loaded.";
-                return false;
+                // Legacy SaveBill never required stock for bill create.
+                return true;
             }
 
             Stocks.CaseSensitive = true;
@@ -594,8 +602,8 @@ namespace InfyPOS.Processors
                 rows = Stocks.Select("serialno = '" + safe + "'");
             if (rows == null || rows.Length == 0)
             {
-                error = "Product/stock not found on MASTER for barcode: " + barcode;
-                return false;
+                // Not in stock.data (common with AutoBarcode product-code-price) — allow like SaveBill.
+                return true;
             }
 
             var row = rows[0];
@@ -612,6 +620,7 @@ namespace InfyPOS.Processors
                     return false;
                 }
                 row[col] = available - qty;
+                deducted = true;
                 return true;
             }
 

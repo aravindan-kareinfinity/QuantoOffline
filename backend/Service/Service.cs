@@ -154,5 +154,67 @@ namespace Quanto
             });
             return Ok(result);
         }
+
+        /// <summary>
+        /// CLIENT writes bills into MASTER's bill.data via HTTP (MASTER role only).
+        /// </summary>
+        [HttpPost("UploadClientBills")]
+        public async Task<ActionResult> UploadClientBills([FromBody] OfflineClient.ClientBillUpload upload)
+        {
+            var result = await Task.Run(() =>
+            {
+                if (!MachineConfig.IsMaster)
+                {
+                    return new OfflineClient.ClientUploadResult
+                    {
+                        error = true,
+                        completed = true,
+                        errormessage = "This computer is not configured as MASTER."
+                    };
+                }
+                if (upload == null || upload.bills == null)
+                {
+                    return new OfflineClient.ClientUploadResult
+                    {
+                        error = true,
+                        completed = true,
+                        errormessage = "No bills in request."
+                    };
+                }
+                return BillManager.Instance.AcceptRemoteBills(upload.bills, upload.deviceId);
+            });
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// CLIENT writes settlements into MASTER's settlement.data via HTTP (MASTER role only).
+        /// </summary>
+        [HttpPost("UploadClientSettlements")]
+        public async Task<ActionResult> UploadClientSettlements([FromBody] OfflineClient.ClientSettlementUpload upload)
+        {
+            var result = await Task.Run(() =>
+            {
+                if (!MachineConfig.IsMaster)
+                {
+                    return new OfflineClient.ClientUploadResult
+                    {
+                        error = true,
+                        completed = true,
+                        errormessage = "This computer is not configured as MASTER."
+                    };
+                }
+                if (upload == null || upload.settlements == null)
+                {
+                    return new OfflineClient.ClientUploadResult
+                    {
+                        error = true,
+                        completed = true,
+                        errormessage = "No settlements in request."
+                    };
+                }
+                return BillManager.Instance.AcceptRemoteSettlements(upload.settlements, upload.deviceId);
+            });
+            return Ok(result);
+        }
     }
 }

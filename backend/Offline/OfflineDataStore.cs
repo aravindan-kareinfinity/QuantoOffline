@@ -21,7 +21,7 @@ namespace InfyPOS.Processors
 
     /// <summary>
     /// Single entry point for all offline .data read/write.
-    /// Thread-safe per file; all services should use this instead of File.* directly.
+    /// CLIENT role is blocked from all business .data I/O — MASTER is the only store.
     /// </summary>
     public sealed class OfflineDataStore
     {
@@ -33,7 +33,6 @@ namespace InfyPOS.Processors
 
         private OfflineDataStore() { }
 
-        /// <summary>Same as BillManager.datadirectory (App.config Data).</summary>
         public string DataDirectory
         {
             get
@@ -55,7 +54,6 @@ namespace InfyPOS.Processors
         {
             if (string.IsNullOrWhiteSpace(fileName))
                 throw new ArgumentException("File name is required.", nameof(fileName));
-            // Prevent path traversal — only allow a simple file name in Data folder
             var name = Path.GetFileName(fileName);
             return Path.Combine(DataDirectory, name);
         }
@@ -64,6 +62,8 @@ namespace InfyPOS.Processors
 
         public bool Exists(string fileName)
         {
+            if (Quanto.MachineConfig.IsClient)
+                return false;
             var path = GetPath(fileName);
             lock (Gate(path))
             {
@@ -75,6 +75,7 @@ namespace InfyPOS.Processors
 
         public byte[] ReadAllBytes(string fileName)
         {
+            RejectClientBusinessIo("read", fileName);
             var path = GetPath(fileName);
             lock (Gate(path))
             {
@@ -89,6 +90,7 @@ namespace InfyPOS.Processors
 
         public string ReadAllText(string fileName)
         {
+            RejectClientBusinessIo("read", fileName);
             var path = GetPath(fileName);
             lock (Gate(path))
             {
@@ -107,11 +109,12 @@ namespace InfyPOS.Processors
             if (content == null)
                 throw new ArgumentNullException(nameof(content));
 
+            RejectClientBusinessIo("write", fileName);
+
             var path = GetPath(fileName);
             lock (Gate(path))
             {
                 EnsureDirectory();
-                // Atomic-ish replace: write temp then move
                 var temp = path + ".tmp";
                 File.WriteAllBytes(temp, content);
                 if (File.Exists(path))
@@ -124,6 +127,8 @@ namespace InfyPOS.Processors
         {
             if (content == null)
                 throw new ArgumentNullException(nameof(content));
+
+            RejectClientBusinessIo("write", fileName);
 
             var path = GetPath(fileName);
             lock (Gate(path))
@@ -141,11 +146,25 @@ namespace InfyPOS.Processors
 
         public void Delete(string fileName)
         {
+            RejectClientBusinessIo("delete", fileName);
             var path = GetPath(fileName);
             lock (Gate(path))
             {
                 if (File.Exists(path))
                     File.Delete(path);
+            }
+        }
+
+        private static void RejectClientBusinessIo(string op, string fileName)
+        {
+            if (!Quanto.MachineConfig.IsClient)
+                return;
+            var name = Path.GetFileName(fileName) ?? fileName;
+            if (name.EndsWith(".data", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "CLIENT cannot " + op + " local business data file '" + name +
+                    "'. Business data lives only on MASTER (HTTP API).");
             }
         }
 

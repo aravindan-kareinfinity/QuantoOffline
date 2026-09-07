@@ -46,33 +46,47 @@ namespace InfyPOS.Processors
         public void LoadFromClientPackage(OfflineClient.ClientMasterPackage package)
         {
             if (package == null || package.master == null || package.master.Length == 0)
-                throw new InvalidOperationException("Master data is not available from the client.");
+                throw new InvalidOperationException("Master data is not available from the MASTER.");
 
-            Store.WriteAllBytes(OfflineDataFile.Master, package.master);
+            // CLIENT: memory only — never write business .data locally.
+            // MASTER: may also call this; only persist when not CLIENT (blocked by OfflineDataStore anyway).
+            if (!Quanto.MachineConfig.IsClient)
+            {
+                Store.WriteAllBytes(OfflineDataFile.Master, package.master);
+            }
+
             var masterdata = BufferedRealtimeCompressionEngine.Decompress(package.master);
             Data = Newtonsoft.Json.JsonConvert.DeserializeObject<BillSourceData>(System.Text.ASCIIEncoding.ASCII.GetString(masterdata));
 
             if (package.stock != null && package.stock.Length > 0)
             {
-                Store.WriteAllBytes(OfflineDataFile.Stock, package.stock);
+                if (!Quanto.MachineConfig.IsClient)
+                    Store.WriteAllBytes(OfflineDataFile.Stock, package.stock);
                 Stocks = Processors.DataTableCustomFormatter.Deserialize(package.stock, true);
                 Stocks.CaseSensitive = true;
             }
 
             if (package.customer != null && package.customer.Length > 0)
             {
-                Store.WriteAllBytes(OfflineDataFile.Customer, package.customer);
-                CustomerManager.Instance.Reload();
+                if (!Quanto.MachineConfig.IsClient)
+                    Store.WriteAllBytes(OfflineDataFile.Customer, package.customer);
+                CustomerManager.Instance.ReloadFromBytes(package.customer);
+            }
+            else if (Quanto.MachineConfig.IsClient)
+            {
+                CustomerManager.Instance.ClearMemory();
             }
 
-            if (Bills == null)
-                Bills = new List<OfflineClient.Bill>();
-            if (Settlements == null)
-                Settlements = new List<OfflineClient.Settlement>();
+            // CLIENT must not keep local bill/settlement stores as source of truth
+            Bills = new List<OfflineClient.Bill>();
+            Settlements = new List<OfflineClient.Settlement>();
             initialized = true;
         }
+
         public void PersistMasters()
         {
+            if (Quanto.MachineConfig.IsClient)
+                return; // printer/settings stay in memory only on CLIENT
 
             var masterdata = BufferedRealtimeCompressionEngine.Compress(System.Text.ASCIIEncoding.ASCII.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(Data)));
             Store.WriteAllBytes(OfflineDataFile.Master, masterdata);
@@ -246,6 +260,9 @@ namespace InfyPOS.Processors
 
         public void PersistBill(bool clearcurrent)
         {
+            if (Quanto.MachineConfig.IsClient)
+                return;
+
             if (clearcurrent)
             {
                 var offlinelist = new List<InfyPOS.Processors.OfflineClient.DeletedInfo>();
@@ -288,6 +305,9 @@ namespace InfyPOS.Processors
         }
         internal void PersistSettlement(List<string> settled)
         {
+            if (Quanto.MachineConfig.IsClient)
+                return;
+
             var offlinelist = new List<InfyPOS.Processors.OfflineClient.DeletedInfo>();
             if (Store.Exists(OfflineDataFile.Offline))
             {
@@ -313,6 +333,9 @@ namespace InfyPOS.Processors
         }
         public void PersistSettlement(bool clearcurrent)
         {
+            if (Quanto.MachineConfig.IsClient)
+                return;
+
             if (clearcurrent)
             {
                 var offlinelist = new List<InfyPOS.Processors.OfflineClient.DeletedInfo>();
@@ -341,6 +364,9 @@ namespace InfyPOS.Processors
         }
         public void PersistMasters(OfflineClient.MasterData source)
         {
+            if (Quanto.MachineConfig.IsClient)
+                return;
+
             Stocks = Processors.DataTableCustomFormatter.Deserialize(source.Stock, true);
             //Stocks.PrimaryKey = new System.Data.DataColumn[] { Stocks.Columns["barcode"] };
 
@@ -357,6 +383,242 @@ namespace InfyPOS.Processors
             Store.WriteAllBytes(OfflineDataFile.Master, masterdata);
         }
 
+        /// <summary>
+        /// Load bill/settlement lists from disk if not already in memory (API receive path on MASTER).
+        /// </summary>
+        public void EnsureTransactionFilesLoaded()
+        {
+            if (Bills == null)
+            {
+                if (Store.Exists(OfflineDataFile.Bill))
+                {
+                    var billdata = BufferedRealtimeCompressionEngine.Decompress(Store.ReadAllBytes(OfflineDataFile.Bill));
+                    Bills = Newtonsoft.Json.JsonConvert.DeserializeObject<List<OfflineClient.Bill>>(
+                        System.Text.ASCIIEncoding.ASCII.GetString(billdata)) ?? new List<OfflineClient.Bill>();
+                }
+                else
+                {
+                    Bills = new List<OfflineClient.Bill>();
+                }
+            }
+
+            if (Settlements == null)
+            {
+                if (Store.Exists(OfflineDataFile.Settlement))
+                {
+                    var data = BufferedRealtimeCompressionEngine.Decompress(Store.ReadAllBytes(OfflineDataFile.Settlement));
+                    Settlements = Newtonsoft.Json.JsonConvert.DeserializeObject<List<OfflineClient.Settlement>>(
+                        System.Text.ASCIIEncoding.ASCII.GetString(data)) ?? new List<OfflineClient.Settlement>();
+                }
+                else
+                {
+                    Settlements = new List<OfflineClient.Settlement>();
+                }
+            }
+        }
+
+        public OfflineClient.ClientUploadResult AcceptRemoteBills(List<OfflineClient.Bill> incoming, string fromDeviceId)
+        {
+            var result = new OfflineClient.ClientUploadResult { bills = new List<OfflineClient.Bill>() };
+            if (incoming == null || incoming.Count == 0)
+            {
+                result.completed = true;
+                return result;
+            }
+
+            lock (Instance)
+            {
+                try
+                {
+                    EnsureMasterBusinessDataLoaded();
+                    EnsureTransactionFilesLoaded();
+
+                    var stockChanged = false;
+                    foreach (var draft in incoming)
+                    {
+                        if (draft.Billitems != null)
+                        {
+                            foreach (var item in draft.Billitems)
+                            {
+                                if (string.IsNullOrWhiteSpace(item.barcode))
+                                    continue;
+                                if (!TryValidateAndDeductStock(item.barcode, item.qty, out var stockError))
+                                {
+                                    result.error = true;
+                                    result.errormessage = stockError;
+                                    result.completed = true;
+                                    return result;
+                                }
+                                stockChanged = true;
+                            }
+                        }
+
+                        // MASTER assigns authoritative bill numbers under lock
+                        if (Data.Company.Exists(e => e.id == draft.companyid) &&
+                            Data.Company.Find(e => e.id == draft.companyid).billno > 0)
+                        {
+                            draft.index = Data.Company.Find(e => e.id == draft.companyid).billno;
+                            Data.Company.Find(e => e.id == draft.companyid).billno = 0;
+                        }
+                        else if (Bills.Exists(e => e.billdate.Date == draft.billdate.Date && e.companyid == draft.companyid))
+                        {
+                            draft.index = Bills.FindAll(e => e.billdate.Date == draft.billdate.Date && e.companyid == draft.companyid).Max(e => e.index) + 1;
+                        }
+                        else
+                        {
+                            draft.index = NoSequenceManager.Instance.GetNo("bill", draft.companyid, draft.billdate.Date) + 1;
+                        }
+                        draft.billno = GetBillNo(Data.BillPrefix, draft);
+                        draft.createdon = DateTime.Now;
+                        if (draft.locationid <= 0 && Data != null)
+                            draft.locationid = Data.locationid;
+
+                        Bills.Add(draft);
+                        result.bills.Add(draft);
+                        result.accepted++;
+                    }
+
+                    PersistBill(false);
+                    if (stockChanged && Stocks != null)
+                    {
+                        Store.WriteAllBytes(OfflineDataFile.Stock, Processors.DataTableCustomFormatter.Serialize(Stocks, true));
+                        PersistMasters();
+                    }
+
+                    result.completed = true;
+                    Quanto.Logger.Current.InfoFormat(
+                        "MASTER created {0} bill(s) from {1}",
+                        result.accepted, fromDeviceId ?? "?");
+                    return result;
+                }
+                catch (Exception exp)
+                {
+                    result.error = true;
+                    result.completed = true;
+                    result.errormessage = exp.Message;
+                    Quanto.Logger.Current.Error("AcceptRemoteBills failed", exp);
+                    return result;
+                }
+            }
+        }
+
+        public OfflineClient.ClientUploadResult AcceptRemoteSettlements(List<OfflineClient.Settlement> incoming, string fromDeviceId)
+        {
+            var result = new OfflineClient.ClientUploadResult { settlements = new List<OfflineClient.Settlement>() };
+            if (incoming == null || incoming.Count == 0)
+            {
+                result.completed = true;
+                return result;
+            }
+
+            lock (Instance)
+            {
+                try
+                {
+                    EnsureMasterBusinessDataLoaded();
+                    EnsureTransactionFilesLoaded();
+
+                    foreach (var settlement in incoming)
+                    {
+                        if (Data.Company.Exists(e => e.id == settlement.companyid) &&
+                            Data.Company.Find(e => e.id == settlement.companyid).settlementno > 0)
+                        {
+                            settlement.index = Data.Company.Find(e => e.id == settlement.companyid).settlementno;
+                            Data.Company.Find(e => e.id == settlement.companyid).settlementno = 0;
+                        }
+                        else if (Settlements.Exists(e => e.settlementon.Date == settlement.settlementon.Date && e.companyid == settlement.companyid))
+                        {
+                            settlement.index = Settlements.FindAll(e => e.settlementon.Date == settlement.settlementon.Date && e.companyid == settlement.companyid).Max(e => e.index) + 1;
+                        }
+                        else
+                        {
+                            settlement.index = NoSequenceManager.Instance.GetNo("settlement", settlement.companyid, settlement.settlementon.Date) + 1;
+                        }
+                        settlement.code = GetBillNo(Data.SettlementPrefix, settlement);
+                        Settlements.Add(settlement);
+                        result.settlements.Add(settlement);
+                        result.accepted++;
+                    }
+
+                    PersistSettlement(false);
+                    PersistMasters();
+                    result.completed = true;
+                    return result;
+                }
+                catch (Exception exp)
+                {
+                    result.error = true;
+                    result.completed = true;
+                    result.errormessage = exp.Message;
+                    return result;
+                }
+            }
+        }
+
+        /// <summary>Load master/stock from disk on MASTER for API paths (no WinForms Initialize).</summary>
+        public void EnsureMasterBusinessDataLoaded()
+        {
+            if (Data != null && Stocks != null)
+                return;
+
+            if (!Store.Exists(OfflineDataFile.Master))
+                throw new InvalidOperationException("MASTER has no master.data loaded.");
+
+            var masterdata = BufferedRealtimeCompressionEngine.Decompress(Store.ReadAllBytes(OfflineDataFile.Master));
+            Data = Newtonsoft.Json.JsonConvert.DeserializeObject<BillSourceData>(System.Text.ASCIIEncoding.ASCII.GetString(masterdata));
+
+            if (Store.Exists(OfflineDataFile.Stock))
+            {
+                Stocks = Processors.DataTableCustomFormatter.Deserialize(Store.ReadAllBytes(OfflineDataFile.Stock), true);
+                Stocks.CaseSensitive = true;
+            }
+            else
+            {
+                throw new InvalidOperationException("MASTER has no stock.data loaded.");
+            }
+        }
+
+        private bool TryValidateAndDeductStock(string barcode, decimal qty, out string error)
+        {
+            error = null;
+            if (Stocks == null)
+            {
+                error = "MASTER stock is not loaded.";
+                return false;
+            }
+
+            Stocks.CaseSensitive = true;
+            var safe = (barcode ?? "").Replace("'", "''");
+            var rows = Stocks.Select("barcode = '" + safe + "'");
+            if (rows == null || rows.Length == 0)
+                rows = Stocks.Select("serialno = '" + safe + "'");
+            if (rows == null || rows.Length == 0)
+            {
+                error = "Product/stock not found on MASTER for barcode: " + barcode;
+                return false;
+            }
+
+            var row = rows[0];
+            string[] qtyCols = { "qty", "quantity", "balqty", "stockqty", "available", "salableqty", "closingqty" };
+            foreach (var col in qtyCols)
+            {
+                if (!row.Table.Columns.Contains(col) || row[col] == DBNull.Value)
+                    continue;
+                var available = Convert.ToDecimal(row[col]);
+                if (available < qty)
+                {
+                    error = "Insufficient stock on MASTER for " + barcode +
+                            " (available " + available + ", requested " + qty + ").";
+                    return false;
+                }
+                row[col] = available - qty;
+                return true;
+            }
+
+            // No qty column in legacy stock table — barcode exists; allow sale without qty deduction.
+            return true;
+        }
+
         private bool initialized = false;
         public bool Initialize(System.ComponentModel.DoWorkEventArgs e, System.ComponentModel.BackgroundWorker bgw)
         {
@@ -364,7 +626,36 @@ namespace InfyPOS.Processors
             {
                 if (initialized) return true;
 
+                // CLIENT: load business data from MASTER HTTP into memory only (no local .data).
+                if (Quanto.MachineConfig.IsClient)
+                {
+                    bgw?.ReportProgress(10);
+                    if (!Quanto.MasterConnectionMonitor.MasterConnected)
+                    {
+                        // one quick health probe
+                        var ip = Quanto.MachineConfig.LastKnownMasterIp;
+                        if (string.IsNullOrWhiteSpace(ip) ||
+                            !Quanto.MasterConnectionMonitor.VerifyMaster(ip, Quanto.MachineConfig.MasterDeviceId))
+                        {
+                            if (e != null)
+                                e.Result = new InvalidOperationException("Master server unavailable");
+                            return false;
+                        }
+                    }
 
+                    bgw?.ReportProgress(40);
+                    var response = Quanto.ServiceProxy.Instance.DownloadAndApplyClientMaster();
+                    if (response == null || response.error)
+                    {
+                        if (e != null)
+                            e.Result = new InvalidOperationException(
+                                response?.errormessage ?? "Unable to load business data from MASTER.");
+                        return false;
+                    }
+                    bgw?.ReportProgress(100);
+                    initialized = true;
+                    return true;
+                }
 
                 if (Store.Exists(OfflineDataFile.Master))
                 {
@@ -377,7 +668,6 @@ namespace InfyPOS.Processors
                         bgw.ReportProgress(30);
                         Stocks = Processors.DataTableCustomFormatter.Deserialize(Store.ReadAllBytes(OfflineDataFile.Stock), true);
                         Stocks.CaseSensitive = true;
-                        //Stocks.PrimaryKey = new System.Data.DataColumn[] { Stocks.Columns["barcode"] };
                         bgw.ReportProgress(50);
                         if (Store.Exists(OfflineDataFile.Bill))
                         {
@@ -410,7 +700,8 @@ namespace InfyPOS.Processors
             }
             catch (Exception exp)
             {
-                e.Result = exp;
+                if (e != null)
+                    e.Result = exp;
             }
             return false;
         }
@@ -662,6 +953,21 @@ namespace InfyPOS.Processors
             if (Settlements == null)
                 Settlements = new List<OfflineClient.Settlement>();
 
+            if (Quanto.MachineConfig.IsClient)
+            {
+                settlement.createdby = CurrentUser != null ? CurrentUser.id : 0;
+                var push = Quanto.ServiceProxy.Instance.UploadSettlementsToMaster(
+                    new List<OfflineClient.Settlement> { settlement });
+                if (push == null || push.error)
+                    throw new InvalidOperationException(
+                        push?.errormessage ?? "Master server unavailable");
+                if (push.settlements != null && push.settlements.Count > 0)
+                    settlement = push.settlements[0];
+                // Session UI only — not an authoritative local store
+                Settlements.Add(settlement);
+                return true;
+            }
+
             var balance = settlement.balance;
 
             if (InfyPOS.Processors.BillManager.Instance.Data.Company.Find(e => e.id == settlement.companyid).settlementno > 0)
@@ -711,6 +1017,39 @@ namespace InfyPOS.Processors
         {
             if (Bills == null)
                 Bills = new List<OfflineClient.Bill>();
+
+            // CLIENT: authoritative save only on MASTER via HTTP (no local .data).
+            if (Quanto.MachineConfig.IsClient)
+            {
+                foreach (var currentBill in billlist)
+                {
+                    currentBill.createdon = DateTime.Now;
+                    if (CurrentUser != null)
+                    {
+                        currentBill.createdby = CurrentUser.id;
+                        if (CurrentUser.employeeid > 0 && Data.Employee != null &&
+                            Data.Employee.Exists(e => e.id == CurrentUser.employeeid))
+                        {
+                            currentBill.biller = Data.Employee.Find(e => e.id == CurrentUser.employeeid).name;
+                        }
+                    }
+                    if (Data != null)
+                    {
+                        currentBill.counterid = Data.counterid;
+                        currentBill.locationid = Data.locationid;
+                    }
+                }
+
+                var push = Quanto.ServiceProxy.Instance.UploadBillsToMaster(billlist);
+                if (push == null || push.error)
+                    throw new InvalidOperationException(
+                        push?.errormessage ?? "Master server unavailable");
+
+                var saved = push.bills != null && push.bills.Count > 0 ? push.bills : billlist;
+                // UI session list only — not persisted as business store
+                Bills.AddRange(saved);
+                return saved;
+            }
 
             foreach (var currentBill in billlist)
             {
@@ -780,6 +1119,11 @@ namespace InfyPOS.Processors
             }
             public void Inialize()
             {
+                if (Quanto.MachineConfig.IsClient)
+                {
+                    list = list ?? new List<OfflineClient.Customer>();
+                    return;
+                }
                 if (Store.Exists(OfflineDataFile.Customer))
                 {
                     var customerdata = BufferedRealtimeCompressionEngine.Decompress(Store.ReadAllBytes(OfflineDataFile.Customer));
@@ -793,6 +1137,22 @@ namespace InfyPOS.Processors
             public void Reload()
             {
                 Inialize();
+            }
+            public void ReloadFromBytes(byte[] customerPackage)
+            {
+                if (customerPackage == null || customerPackage.Length == 0)
+                {
+                    list = new List<OfflineClient.Customer>();
+                    return;
+                }
+                var customerdata = BufferedRealtimeCompressionEngine.Decompress(customerPackage);
+                list = Newtonsoft.Json.JsonConvert.DeserializeObject<List<OfflineClient.Customer>>(
+                    System.Text.ASCIIEncoding.ASCII.GetString(customerdata))
+                    ?? new List<OfflineClient.Customer>();
+            }
+            public void ClearMemory()
+            {
+                list = new List<OfflineClient.Customer>();
             }
             public OfflineClient.Customer Get(string no)
             {
@@ -825,6 +1185,8 @@ namespace InfyPOS.Processors
             }
             public void Persist()
             {
+                if (Quanto.MachineConfig.IsClient)
+                    return; // customers are MASTER-owned; memory update only for this session
                 var masterdata = BufferedRealtimeCompressionEngine.Compress(System.Text.ASCIIEncoding.ASCII.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(list)));
                 Store.WriteAllBytes(OfflineDataFile.Customer, masterdata);
             }
@@ -868,8 +1230,8 @@ namespace InfyPOS.Processors
             }
             public void Persist()
             {
-
-
+                if (Quanto.MachineConfig.IsClient)
+                    return;
                 var masterdata = BufferedRealtimeCompressionEngine.Compress(System.Text.ASCIIEncoding.ASCII.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(list)));
                 Store.WriteAllBytes(OfflineDataFile.Sequence, masterdata);
             }

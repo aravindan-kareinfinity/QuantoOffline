@@ -678,11 +678,13 @@ namespace Quanto.Offline
             var billlist = CurrentBill.CreateBills(InfyPOS.Processors.BillManager.Instance.Data.Tax);
             
 
-
+            try
+            {
             if (InfyPOS.Processors.BillManager.Instance.Data.Autosettlement || 
                 InfyPOS.Processors.BillManager.Instance.Data.Location.autosettlement)
             {
-                InfyPOS.Processors.BillManager.Instance.UpdateBillNo(billlist);
+                if (!Quanto.MachineConfig.IsClient)
+                    InfyPOS.Processors.BillManager.Instance.UpdateBillNo(billlist);
                 Settlement settlement = new Settlement();
                 settlement.Initalize(true, billlist);
                 if (settlement.ShowDialog() == DialogResult.Cancel)
@@ -709,6 +711,17 @@ namespace Quanto.Offline
                 PrintBill(bill);
             }
             CreateNewBill();
+            }
+            catch (Exception exp)
+            {
+                MessageBox.Show(
+                    exp.Message != null && exp.Message.IndexOf("Master", StringComparison.OrdinalIgnoreCase) >= 0
+                        ? exp.Message
+                        : ("Unable to save bill.\n\n" + exp.Message),
+                    "Billing",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
 
         private void PrintBill(OfflineClient.Bill currentBill)

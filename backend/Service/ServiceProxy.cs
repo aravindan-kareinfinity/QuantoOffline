@@ -197,6 +197,100 @@ namespace Quanto
             }
         }
 
+        public InfyPOS.Processors.OfflineClient.ClientUploadResult UploadBillsToMaster(
+            List<InfyPOS.Processors.OfflineClient.Bill> bills)
+        {
+            if (!MachineConfig.IsClient)
+            {
+                return new InfyPOS.Processors.OfflineClient.ClientUploadResult
+                {
+                    completed = true,
+                    errormessage = "Not a CLIENT role."
+                };
+            }
+            if (string.IsNullOrEmpty(ClientWebUrl))
+            {
+                return new InfyPOS.Processors.OfflineClient.ClientUploadResult
+                {
+                    error = true,
+                    completed = true,
+                    errormessage = "MasterApiUrl / ClientURL is not configured."
+                };
+            }
+
+            var payload = new InfyPOS.Processors.OfflineClient.ClientBillUpload
+            {
+                deviceId = MachineConfig.DeviceId,
+                machineName = Environment.MachineName,
+                bills = bills
+            };
+
+            using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(60) })
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+                string url = ClientWebUrl + "/TextilePOS/UploadClientBills";
+                Logger.Current.Info("UploadBillsToMaster " + url);
+                var result = client.PostAsync(url, content).GetAwaiter().GetResult();
+                var json = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                if (!result.IsSuccessStatusCode)
+                {
+                    return new InfyPOS.Processors.OfflineClient.ClientUploadResult
+                    {
+                        error = true,
+                        completed = true,
+                        errormessage = "MASTER returned " + (int)result.StatusCode + ": " + json
+                    };
+                }
+                return JsonConvert.DeserializeObject<InfyPOS.Processors.OfflineClient.ClientUploadResult>(json)
+                       ?? new InfyPOS.Processors.OfflineClient.ClientUploadResult { completed = true };
+            }
+        }
+
+        public InfyPOS.Processors.OfflineClient.ClientUploadResult UploadSettlementsToMaster(
+            List<InfyPOS.Processors.OfflineClient.Settlement> settlements)
+        {
+            if (!MachineConfig.IsClient)
+            {
+                return new InfyPOS.Processors.OfflineClient.ClientUploadResult { completed = true };
+            }
+            if (string.IsNullOrEmpty(ClientWebUrl))
+            {
+                return new InfyPOS.Processors.OfflineClient.ClientUploadResult
+                {
+                    error = true,
+                    completed = true,
+                    errormessage = "MasterApiUrl / ClientURL is not configured."
+                };
+            }
+
+            var payload = new InfyPOS.Processors.OfflineClient.ClientSettlementUpload
+            {
+                deviceId = MachineConfig.DeviceId,
+                machineName = Environment.MachineName,
+                settlements = settlements
+            };
+
+            using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(60) })
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+                string url = ClientWebUrl + "/TextilePOS/UploadClientSettlements";
+                Logger.Current.Info("UploadSettlementsToMaster " + url);
+                var result = client.PostAsync(url, content).GetAwaiter().GetResult();
+                var json = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                if (!result.IsSuccessStatusCode)
+                {
+                    return new InfyPOS.Processors.OfflineClient.ClientUploadResult
+                    {
+                        error = true,
+                        completed = true,
+                        errormessage = "MASTER returned " + (int)result.StatusCode + ": " + json
+                    };
+                }
+                return JsonConvert.DeserializeObject<InfyPOS.Processors.OfflineClient.ClientUploadResult>(json)
+                       ?? new InfyPOS.Processors.OfflineClient.ClientUploadResult { completed = true };
+            }
+        }
+
         public async Task<InfyPOS.Processors.OfflineClient.WindowsOfflineResponse> DownloadMaster(InfyPOS.Processors.OfflineClient.WindowsOfflineRequest creteria)
         {
             using (var client = new HttpClient())

@@ -63,6 +63,13 @@ namespace Quanto.Offline
         private void Bgw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             this.Text = "Login";
+            if (!Ready)
+            {
+                var msg = "Master server unavailable or business data could not be loaded.";
+                if (e.Result is Exception exp && !string.IsNullOrWhiteSpace(exp.Message))
+                    msg = exp.Message;
+                MessageBox.Show(msg, "Login", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void Bgw_DoWork(object sender, DoWorkEventArgs e)

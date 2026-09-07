@@ -84,6 +84,33 @@ namespace InfyPOS.Processors
             public byte[] customer { get; set; }
         }
 
+        /// <summary>CLIENT → MASTER bill write-back over HTTP (not shared files).</summary>
+        public class ClientBillUpload
+        {
+            public string deviceId { get; set; }
+            public string machineName { get; set; }
+            public List<Bill> bills { get; set; }
+        }
+
+        public class ClientSettlementUpload
+        {
+            public string deviceId { get; set; }
+            public string machineName { get; set; }
+            public List<Settlement> settlements { get; set; }
+        }
+
+        public class ClientUploadResult
+        {
+            public bool error { get; set; }
+            public string errormessage { get; set; }
+            public bool completed { get; set; }
+            public int accepted { get; set; }
+            public int skipped { get; set; }
+            /// <summary>Bills as saved on MASTER (authoritative bill numbers).</summary>
+            public List<Bill> bills { get; set; }
+            public List<Settlement> settlements { get; set; }
+        }
+
         public class WindowsOfflineResponse
         {
             DateTime createdon { get; set; }

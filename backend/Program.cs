@@ -1,9 +1,7 @@
 ﻿using Quanto.Offline;
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
-using System.Security.Principal;
 using System.ServiceProcess;
 using System.Threading;
 using System.Windows.Forms;
@@ -18,7 +16,6 @@ namespace Quanto
         static void Main(string[] args)
         {
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
-            bool _IsInstalled = false;
             bool serviceStarting = false;
             string SERVICE_NAME = "Quanto-Client-Service";
             if (args != null && args.Length == 1 && args[0] == "CONFIG" && !System.Diagnostics.Debugger.IsAttached)
@@ -57,85 +54,94 @@ namespace Quanto
             }
             else if ((args.Length == 1 && args[0] == "client") || System.Diagnostics.Debugger.IsAttached)
             {
-                Console.Write("Starting");
-                try
-                {
-                    PrinterServiceHost hc = new PrinterServiceHost();
-                    hc.Start();
-                    Application.EnableVisualStyles();
-                    Application.SetCompatibleTextRenderingDefault(false);
-                    Application.Run(new OfflineApplicationContext());
-                    System.Console.ReadLine();
-                }
-                catch (Exception exp)
-                {
-                    Console.Write(exp);
-                }
+                StartDesktop();
                 return;
             }
             else
             {
-                if (!IsRunAsAdministrator())
+                try
                 {
-                    var processInfo = new ProcessStartInfo(Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location)
+                    ServiceController[] services = ServiceController.GetServices();
+                    foreach (ServiceController service in services)
                     {
-                        UseShellExecute = true,
-                        Verb = "runas",
-                    };
-                    try
-                    {
-                        Process.Start(processInfo);
-                        return;
-                    }
-                    catch (Exception)
-                    {
-                        MessageBox.Show("Sorry, this application must be run as Administrator.");
-                    }
-                }
-            }
-
-            ServiceController[] services = ServiceController.GetServices();
-
-            foreach (ServiceController service in services)
-            {
-                if (service.ServiceName.Equals(SERVICE_NAME))
-                {
-                    _IsInstalled = true;
-                    if (service.Status == ServiceControllerStatus.StartPending)
-                    {
-                        serviceStarting = true;
-                    }
-                    break;
-                }
-            }
-
-            if (!serviceStarting)
-            {
-                if (_IsInstalled == true)
-                {
-                    Application.EnableVisualStyles();
-                    Application.SetCompatibleTextRenderingDefault(false);
-                    Application.Run(new OfflineApplicationContext());
-                }
-                else
-                {
-                    DialogResult dr = MessageBox.Show("Do you REALLY like to install the " + SERVICE_NAME + "?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-                    if (dr == DialogResult.Yes)
-                    {
-                        Configform configform = new Configform();
-                        if (configform.ShowDialog() == DialogResult.OK)
+                        if (service.ServiceName.Equals(SERVICE_NAME) &&
+                            service.Status == ServiceControllerStatus.StartPending)
                         {
-                            SelfInstaller.InstallMe();
-                            MessageBox.Show("Successfully installed the " + SERVICE_NAME, "Status",
-                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            serviceStarting = true;
+                            break;
                         }
                     }
                 }
+                catch
+                {
+                    serviceStarting = false;
+                }
+
+                if (serviceStarting)
+                {
+                    ServiceBase[] servicestorun = new ServiceBase[] { new PrinterServiceHost() };
+                    ServiceBase.Run(servicestorun);
+                    return;
+                }
+
+                StartDesktop();
             }
-            else
+        }
+
+        /// <summary>
+        /// Setup (if needed) → Kestrel → tray UI, same process.
+        /// </summary>
+        private static void StartDesktop()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            // First-run / incomplete config must complete BEFORE role-dependent services start.
+            if (!MachineConfig.IsConfigured)
             {
-                ServiceBase[] servicestorun = new ServiceBase[] { new PrinterServiceHost() };
-                ServiceBase.Run(servicestorun);
+                using (var setup = new SetupWizardForm(SetupWizardForm.WizardMode.FirstRun))
+                {
+                    if (setup.ShowDialog() != DialogResult.OK || !MachineConfig.IsConfigured)
+                    {
+                        MessageBox.Show(
+                            "Setup was not completed. Quanto.Client will exit.",
+                            "Quanto Client Setup",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                        return;
+                    }
+                }
+            }
+
+            MachineConfig.EnsureInitialized();
+
+            Console.Write("Starting");
+            PrinterServiceHost hc = new PrinterServiceHost();
+            if (!hc.StartInProcess())
+            {
+                var listenUrl = MachineConfig.ListenUrl;
+                MessageBox.Show(
+                    "Failed to start the local API on " + listenUrl + ".\n\n" +
+                    "The port may already be in use. Close the other application using that port, then try again.",
+                    "Quanto.Client",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
+            try
+            {
+                Application.ApplicationExit += (s, e) => hc.StopInProcess();
+                Application.Run(new OfflineApplicationContext());
+            }
+            catch (Exception exp)
+            {
+                Logger.Current.Error("Desktop application failed", exp);
+                Console.Write(exp);
+            }
+            finally
+            {
+                hc.StopInProcess();
             }
         }
 
@@ -143,13 +149,6 @@ namespace Quanto
         {
             Console.WriteLine("Assembly not found: " + args.Name);
             return null;
-        }
-
-        private static bool IsRunAsAdministrator()
-        {
-            var wi = WindowsIdentity.GetCurrent();
-            var wp = new WindowsPrincipal(wi);
-            return wp.IsInRole(WindowsBuiltInRole.Administrator);
         }
     }
 

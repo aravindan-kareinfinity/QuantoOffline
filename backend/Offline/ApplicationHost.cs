@@ -64,6 +64,7 @@ namespace Quanto
                 CreateIcon("Bill","pos") ,
                 CreateIcon("Settlement","pos") ,
                 CreateIcon("Settings","settings") ,
+                CreateMachineConfigMenu(),
                 CreateIcon("Printer Service Start","start") ,
                 CreateIcon("Printer Service Stop","stop") ,
                 CreateIcon("Data Sync","sync"),
@@ -92,6 +93,58 @@ namespace Quanto
             toolStripMenuItem.Size = new Size(152, 22);
             toolStripMenuItem.Click += ToolStripMenuItem_Click;
             return toolStripMenuItem;
+        }
+
+        private ToolStripMenuItem CreateMachineConfigMenu()
+        {
+            var root = new ToolStripMenuItem("Machine Configuration");
+            root.ImageKey = "settings";
+
+            var changeRole = new ToolStripMenuItem("Change Role / Reconfigure");
+            changeRole.Click += (s, e) => RunReconfigure(SetupWizardForm.WizardMode.Reconfigure);
+
+            var changeMaster = new ToolStripMenuItem("Change Master");
+            changeMaster.Click += (s, e) =>
+            {
+                if (!MachineConfig.IsClient)
+                {
+                    MessageBox.Show(
+                        "Change Master is only available when this computer is a CLIENT.",
+                        "Machine Configuration",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
+                RunReconfigure(SetupWizardForm.WizardMode.ChangeMasterOnly);
+            };
+
+            var viewInfo = new ToolStripMenuItem("View Device Information");
+            viewInfo.Click += (s, e) =>
+            {
+                using (var form = new MachineInfoForm())
+                    form.ShowDialog();
+            };
+
+            root.DropDownItems.Add(changeRole);
+            root.DropDownItems.Add(changeMaster);
+            root.DropDownItems.Add(new ToolStripSeparator());
+            root.DropDownItems.Add(viewInfo);
+            return root;
+        }
+
+        private void RunReconfigure(SetupWizardForm.WizardMode mode)
+        {
+            using (var setup = new SetupWizardForm(mode))
+            {
+                if (setup.ShowDialog() != DialogResult.OK)
+                    return;
+            }
+
+            MessageBox.Show(
+                "Configuration saved.\n\nPlease Exit and restart Quanto.Client so services start with the new role.",
+                "Machine Configuration",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
         }
 
         private void ToolStripMenuItem_Click(object sender, EventArgs e)
@@ -173,6 +226,8 @@ namespace Quanto
         {
             //Cleanup so that the icon will be removed when the application is closed
             TrayIcon.Visible = false;
+            // Stop in-process Kestrel when tray/desktop exits (no-op if not started in this process)
+            PrinterServiceHost.InProcessInstance?.StopInProcess();
         }
 
         private void TrayIcon_DoubleClick(object sender, EventArgs e)

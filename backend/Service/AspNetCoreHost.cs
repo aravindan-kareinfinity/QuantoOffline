@@ -40,7 +40,19 @@ namespace Quanto
             builder.Services.AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>
-                    policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+                {
+                    var allowed = MachineConfig.AllowedOrigins;
+                    if (!string.IsNullOrWhiteSpace(allowed))
+                    {
+                        var origins = allowed.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                        policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
+                    }
+                    else
+                    {
+                        // Backward compatible default for existing web apps; set AllowedOrigins to tighten.
+                        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                    }
+                });
             });
 
             var app = builder.Build();
@@ -50,8 +62,17 @@ namespace Quanto
                 if (HttpMethods.IsOptions(context.Request.Method))
                 {
                     var origin = context.Request.Headers.Origin.FirstOrDefault() ?? "*";
-                    context.Response.Headers["Access-Control-Allow-Origin"] = origin;
-                    context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+                    var allowed = MachineConfig.AllowedOrigins;
+                    if (!string.IsNullOrWhiteSpace(allowed))
+                    {
+                        var origins = allowed.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (origins.Any(o => string.Equals(o.Trim(), origin, StringComparison.OrdinalIgnoreCase)))
+                            context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+                    }
+                    else
+                    {
+                        context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+                    }
                     context.Response.Headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS";
                     context.Response.Headers["Access-Control-Allow-Headers"] =
                         "authorization,access-control-allow-origin,x-requested-with,Accept,accept-language,content-language,content-type";
@@ -78,7 +99,21 @@ namespace Quanto
             }
 
             var cts = new CancellationTokenSource();
+            var started = new ManualResetEventSlim(false);
+            app.Lifetime.ApplicationStarted.Register(() => started.Set());
             var runTask = app.RunAsync(cts.Token);
+
+            // Wait until Kestrel has bound so callers can fail clearly on port conflicts.
+            if (!started.Wait(TimeSpan.FromSeconds(30)) || runTask.IsFaulted || runTask.IsCanceled)
+            {
+                try { cts.Cancel(); } catch { /* ignore */ }
+                try { app.DisposeAsync().AsTask().GetAwaiter().GetResult(); } catch { /* ignore */ }
+                if (runTask.IsFaulted && runTask.Exception != null)
+                    throw runTask.Exception.GetBaseException();
+                throw new InvalidOperationException(
+                    "Kestrel failed to start listening on: " + string.Join(", ", urlList));
+            }
+
             return new HostDisposable(app, cts, runTask);
         }
 

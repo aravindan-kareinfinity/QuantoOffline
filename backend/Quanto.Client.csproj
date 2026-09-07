@@ -17,6 +17,15 @@
     <ApplicationIcon>Resources\favicon.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <!-- Applied when publishing single-file (see Properties/PublishProfiles/WinX64SingleFile.pubxml) -->
+  <PropertyGroup Condition="'$(PublishSingleFile)' == 'true'">
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="log4net" Version="3.2.0" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -40,12 +49,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- SDK copies App.config → Quanto.Client.dll.config automatically; also keep App.config name for tooling -->
+    <!-- ConfigurationManager/log4net need App.config beside the published EXE — do not embed in single-file -->
     <None Update="App.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>
-    <Content Include="BI\biquerys.txt" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="Tally\tallyResult.xml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="BI\biquerys.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="Tally\tallyResult.xml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
   <!-- Match net48 compile set: SDK includes all *.cs by default; exclude unused/orphan server models -->

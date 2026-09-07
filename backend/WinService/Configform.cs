@@ -197,25 +197,10 @@ namespace Quanto
 
         private void button3_Click(object sender, EventArgs e)
         {
-            try
-            {
-                // Late-bound COM (no NetFwTypeLib interop assembly required for net10.0 SDK builds)
-                dynamic firewallRule = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule"));
-                dynamic firewallPolicy = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
-
-                firewallRule.Protocol = 6;
-                firewallRule.LocalPorts = "8099";
-                firewallRule.Action = 1; // NET_FW_ACTION_ALLOW
-                firewallRule.Direction = 1; // NET_FW_RULE_DIR_IN
-                firewallRule.Description = "Quanto Printing Service";
-                firewallRule.Enabled = true;
-                firewallRule.InterfaceTypes = "All";
-                firewallRule.Name = "Quanto Printing Service";
-                firewallPolicy.Rules.Add(firewallRule);
-            }
-            catch (Exception)
-            {
-            }
+            if (FirewallHelper.EnsureApiPortAllowed(MachineConfig.ApiPort, out var message))
+                MessageBox.Show(message, "Firewall", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            else
+                MessageBox.Show(message, "Firewall", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void button4_Click(object sender, EventArgs e)

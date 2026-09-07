@@ -42,6 +42,10 @@ namespace Quanto
         {
             get
             {
+                // CLIENT role always pulls business master data from MASTER API (never opens master DB file).
+                if (MachineConfig.IsClient)
+                    return true;
+
                 var source = System.Configuration.ConfigurationManager.AppSettings["MasterSource"];
                 return !string.IsNullOrEmpty(source) &&
                        source.Equals("Client", StringComparison.OrdinalIgnoreCase);
@@ -52,6 +56,16 @@ namespace Quanto
         {
             get
             {
+                if (MachineConfig.IsClient)
+                {
+                    var masterUrl = MachineConfig.MasterApiUrl;
+                    if (!string.IsNullOrWhiteSpace(masterUrl))
+                        return masterUrl.TrimEnd('/');
+
+                    if (!string.IsNullOrWhiteSpace(MachineConfig.LastKnownMasterIp))
+                        return ("http://" + MachineConfig.LastKnownMasterIp + ":" + MachineConfig.MasterPort).TrimEnd('/');
+                }
+
                 var url = System.Configuration.ConfigurationManager.AppSettings["ClientURL"];
                 return string.IsNullOrEmpty(url) ? "" : url.TrimEnd('/');
             }

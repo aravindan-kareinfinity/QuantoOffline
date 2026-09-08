@@ -19,12 +19,17 @@ namespace Quanto.Offline
         
         private void button1_Click(object sender, EventArgs e)
         {
-            if (ServiceProxy.Instance.UseClientMasterSource)
+            if (!Quanto.MachineConfig.IsMaster)
             {
-                if (txtServer.Text != System.Configuration.ConfigurationManager.AppSettings["ClientURL"])
-                    Quanto.Configform.AddOrUpdateAppSettings("ClientURL", txtServer.Text);
+                MessageBox.Show(
+                    "Connect Server (cloud sync) is only available on the MASTER computer.",
+                    Text,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
             }
-            else if (txtServer.Text != System.Configuration.ConfigurationManager.AppSettings["ServerURL"])
+
+            if (txtServer.Text != System.Configuration.ConfigurationManager.AppSettings["ServerURL"])
             {
                 Quanto.Configform.AddOrUpdateAppSettings("ServerURL", txtServer.Text);
             }
@@ -98,7 +103,7 @@ namespace Quanto.Offline
             Info argument = e.Argument as Info;
             try
             {
-                e.Result = ServiceProxy.Instance.DownloadMasterFromConfiguredSource(new InfyPOS.Processors.OfflineClient.WindowsOfflineRequest()
+                e.Result = ServiceProxy.Instance.DownloadMasterFromCloud(new InfyPOS.Processors.OfflineClient.WindowsOfflineRequest()
                 {
                     orgainzationcode = argument.organizationcode,
                     locationcode = argument.locationcode,
@@ -125,11 +130,20 @@ namespace Quanto.Offline
 
         private void Login_Load(object sender, EventArgs e)
         {
-            txtServer.Text = ServiceProxy.Instance.UseClientMasterSource
-                ? System.Configuration.ConfigurationManager.AppSettings["ClientURL"]
-                : System.Configuration.ConfigurationManager.AppSettings["ServerURL"];
-            if (ServiceProxy.Instance.UseClientMasterSource)
-                label4.Text = "Client";
+            if (!Quanto.MachineConfig.IsMaster)
+            {
+                MessageBox.Show(
+                    "Connect Server (cloud sync) is only available on the MASTER computer.",
+                    Text,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                DialogResult = DialogResult.Cancel;
+                Close();
+                return;
+            }
+
+            txtServer.Text = System.Configuration.ConfigurationManager.AppSettings["ServerURL"];
+            label4.Text = "Cloud Server";
             txtOrganizationCode.Text = System.Configuration.ConfigurationManager.AppSettings["OrganizationCode"];
             txtLocationCode.Text = System.Configuration.ConfigurationManager.AppSettings["Locationcode"];
         }

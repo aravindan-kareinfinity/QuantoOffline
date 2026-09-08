@@ -76,6 +76,15 @@ namespace Quanto
             if (UseClientMasterSource)
                 return DownloadAndApplyClientMaster();
 
+            return DownloadMasterFromCloud(creteria);
+        }
+
+        /// <summary>
+        /// MASTER: download master/stock from Quanto cloud (ServerURL). Never uses LAN ClientMaster API.
+        /// </summary>
+        public InfyPOS.Processors.OfflineClient.WindowsOfflineResponse DownloadMasterFromCloud(
+            InfyPOS.Processors.OfflineClient.WindowsOfflineRequest creteria)
+        {
             var result = DownloadMaster(creteria).Result;
             if (result == null)
                 return new InfyPOS.Processors.OfflineClient.WindowsOfflineResponse()

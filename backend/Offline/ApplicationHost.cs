@@ -57,21 +57,7 @@ namespace Quanto
 
             if (string.IsNullOrEmpty(ApplicationMode))
             {
-                this.TrayIconContextMenu.Items.AddRange(new ToolStripItem[] {
-                CreateIcon("Load Data","start"),
-                CreateIcon("Connect Server","start"),
-                CreateIcon("Login","start"),
-                CreateIcon("Bill","pos") ,
-                CreateIcon("Settlement","pos") ,
-                CreateIcon("Settings","settings") ,
-                CreateMachineConfigMenu(),
-                CreateIcon("Printer Service Start","start") ,
-                CreateIcon("Printer Service Stop","stop") ,
-                CreateIcon("Data Sync","sync"),
-                CreateIcon("BI Sync","bisync"),
-                CreateIcon("Log out","close"),
-                CreateIcon("Exit","close")
-                });
+                this.TrayIconContextMenu.Items.AddRange(BuildStandardTrayMenuItems());
             }
             else if (ApplicationMode == "BI")
             {
@@ -84,6 +70,34 @@ namespace Quanto
             this.TrayIconContextMenu.Size = new Size(153, 70);
             TrayIconContextMenu.ResumeLayout(false);
             TrayIcon.ContextMenuStrip = TrayIconContextMenu;
+        }
+
+        private ToolStripItem[] BuildStandardTrayMenuItems()
+        {
+            var items = new System.Collections.Generic.List<ToolStripItem>();
+
+            // MASTER only: cloud sync and local master file load (CLIENT pulls from MASTER via HTTP on Bill open).
+            if (MachineConfig.IsMaster)
+            {
+                items.Add(CreateIcon("Load Data", "start"));
+                items.Add(CreateIcon("Connect Server", "start"));
+            }
+
+            items.Add(CreateIcon("Login", "start"));
+            items.Add(CreateIcon("Bill", "pos"));
+            items.Add(CreateIcon("Settlement", "pos"));
+            items.Add(CreateIcon("Settings", "settings"));
+            items.Add(CreateMachineConfigMenu());
+            items.Add(CreateIcon("Printer Service Start", "start"));
+            items.Add(CreateIcon("Printer Service Stop", "stop"));
+
+            if (MachineConfig.IsMaster)
+                items.Add(CreateIcon("Data Sync", "sync"));
+
+            items.Add(CreateIcon("BI Sync", "bisync"));
+            items.Add(CreateIcon("Log out", "close"));
+            items.Add(CreateIcon("Exit", "close"));
+            return items.ToArray();
         }
 
         public ToolStripMenuItem CreateIcon(string display, string key)
@@ -177,6 +191,15 @@ namespace Quanto
                     }
                     break;
                 case "Connect Server":
+                    if (!MachineConfig.IsMaster)
+                    {
+                        MessageBox.Show(
+                            "Connect Server (cloud sync) is only available on the MASTER computer.",
+                            "Connect Server",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                        break;
+                    }
                     new Offline.MasterDownload().ShowDialog();
                     break;
                 case "Bill":

@@ -152,6 +152,7 @@ namespace Quanto
             }
 
             SaveSetting("MachineRole", "Master");
+            SaveSetting("MasterSource", "Server");
             SaveSetting("ListenUrl", DefaultListenUrl);
             SaveSetting("ApiPort", DefaultApiPort.ToString());
             SaveSetting("MasterDeviceId", "");

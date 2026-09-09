@@ -429,10 +429,25 @@ namespace Quanto.Offline
         private void SetDate(DateTime date)
         {
             dateToolStripMenuItem.Text = "Bill Date : " + date.ToString("dd-MM-yyyy");
-            billdate = date;
+            billdate = date.Date;
+            if (Quanto.MachineConfig.IsClient)
+            {
+                try
+                {
+                    InfyPOS.Processors.BillManager.Instance.LoadClientBillsFromMaster(billdate);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        ex.Message,
+                        "Billing",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+            }
             if (InfyPOS.Processors.BillManager.Instance.Bills == null)
                 InfyPOS.Processors.BillManager.Instance.Bills = new List<OfflineClient.Bill>();
-            if (InfyPOS.Processors.BillManager.Instance.Bills.Exists(e => e.billdate == billdate))
+            if (InfyPOS.Processors.BillManager.Instance.Bills.Exists(e => e.billdate.Date == billdate.Date))
             {
                 UpdateBillScroller(null);
             }
@@ -602,7 +617,7 @@ namespace Quanto.Offline
         {
             if (bill == null)
             {
-                currentBillList = InfyPOS.Processors.BillManager.Instance.Bills.FindAll(ex => ex.billdate == billdate);
+                currentBillList = InfyPOS.Processors.BillManager.Instance.Bills.FindAll(ex => ex.billdate.Date == billdate.Date);
                 billScroller.Minimum = 1;
                 billScroller.Maximum = currentBillList.Count;
                 billScroller.Value = billScroller.Maximum;
@@ -612,7 +627,7 @@ namespace Quanto.Offline
             else
             {
                 if (currentBillList == null)
-                    currentBillList = InfyPOS.Processors.BillManager.Instance.Bills.FindAll(ex => ex.billdate == billdate);
+                    currentBillList = InfyPOS.Processors.BillManager.Instance.Bills.FindAll(ex => ex.billdate.Date == billdate.Date);
                 if(!currentBillList.Contains(bill))
                     currentBillList.Add(bill);
                 billScroller.Maximum = currentBillList.Count;

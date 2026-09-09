@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -131,6 +132,37 @@ namespace Quanto
                     package.lastSyncOn = BillManager.Instance.Data.lastSyncOn;
                 package.completed = true;
                 return package;
+            });
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// CLIENT reads today's (or a chosen date's) bills from MASTER so Available Bills matches the MASTER screen.
+        /// </summary>
+        [HttpGet("ClientBills/{yyyymmdd}")]
+        public async Task<ActionResult> ClientBills(string yyyymmdd)
+        {
+            var result = await Task.Run(() =>
+            {
+                var payload = new OfflineClient.ClientUploadResult { bills = new List<OfflineClient.Bill>() };
+                if (!MachineConfig.IsMaster)
+                {
+                    payload.error = true;
+                    payload.completed = true;
+                    payload.errormessage = "This computer is not configured as MASTER.";
+                    return payload;
+                }
+                DateTime date;
+                if (!DateTime.TryParseExact(yyyymmdd, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+                {
+                    payload.error = true;
+                    payload.completed = true;
+                    payload.errormessage = "Invalid bill date.";
+                    return payload;
+                }
+                payload.bills = BillManager.Instance.GetBillsForDate(date);
+                payload.completed = true;
+                return payload;
             });
             return Ok(result);
         }

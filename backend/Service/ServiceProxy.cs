@@ -255,6 +255,46 @@ namespace Quanto
             }
         }
 
+        public InfyPOS.Processors.OfflineClient.ClientUploadResult DownloadBillsFromMaster(DateTime date)
+        {
+            if (!MachineConfig.IsClient)
+            {
+                return new InfyPOS.Processors.OfflineClient.ClientUploadResult
+                {
+                    completed = true,
+                    bills = new List<InfyPOS.Processors.OfflineClient.Bill>()
+                };
+            }
+            if (string.IsNullOrEmpty(ClientWebUrl))
+            {
+                return new InfyPOS.Processors.OfflineClient.ClientUploadResult
+                {
+                    error = true,
+                    completed = true,
+                    errormessage = "MasterApiUrl / ClientURL is not configured."
+                };
+            }
+
+            using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
+            {
+                string url = ClientWebUrl + "/TextilePOS/ClientBills/" + date.ToString("yyyyMMdd");
+                Logger.Current.Info("DownloadBillsFromMaster " + url);
+                var result = client.GetAsync(url).GetAwaiter().GetResult();
+                var json = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                if (!result.IsSuccessStatusCode)
+                {
+                    return new InfyPOS.Processors.OfflineClient.ClientUploadResult
+                    {
+                        error = true,
+                        completed = true,
+                        errormessage = "MASTER returned " + (int)result.StatusCode + ": " + json
+                    };
+                }
+                return JsonConvert.DeserializeObject<InfyPOS.Processors.OfflineClient.ClientUploadResult>(json)
+                       ?? new InfyPOS.Processors.OfflineClient.ClientUploadResult { completed = true };
+            }
+        }
+
         public InfyPOS.Processors.OfflineClient.ClientUploadResult UploadSettlementsToMaster(
             List<InfyPOS.Processors.OfflineClient.Settlement> settlements)
         {

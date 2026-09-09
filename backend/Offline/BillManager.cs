@@ -417,6 +417,34 @@ namespace InfyPOS.Processors
             }
         }
 
+        public List<OfflineClient.Bill> GetBillsForDate(DateTime date)
+        {
+            lock (Instance)
+            {
+                EnsureTransactionFilesLoaded();
+                if (Bills == null)
+                    return new List<OfflineClient.Bill>();
+                return Bills.FindAll(e => e.billdate.Date == date.Date);
+            }
+        }
+
+        public void LoadClientBillsFromMaster(DateTime date)
+        {
+            if (!Quanto.MachineConfig.IsClient)
+                return;
+
+            var pull = Quanto.ServiceProxy.Instance.DownloadBillsFromMaster(date);
+            if (pull == null || pull.error)
+                throw new InvalidOperationException(
+                    pull?.errormessage ?? "Master server unavailable");
+
+            if (Bills == null)
+                Bills = new List<OfflineClient.Bill>();
+            Bills.RemoveAll(e => e.billdate.Date == date.Date);
+            if (pull.bills != null && pull.bills.Count > 0)
+                Bills.AddRange(pull.bills);
+        }
+
         public OfflineClient.ClientUploadResult AcceptRemoteBills(List<OfflineClient.Bill> incoming, string fromDeviceId)
         {
             var result = new OfflineClient.ClientUploadResult { bills = new List<OfflineClient.Bill>() };

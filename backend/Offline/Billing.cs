@@ -697,12 +697,12 @@ namespace Quanto.Offline
                     {
                         settlement = settlement.SettlementMaster
                     };
-                    InfyPOS.Processors.BillManager.Instance.SaveBill(billlist);
+                    billlist = InfyPOS.Processors.BillManager.Instance.SaveBill(billlist);
                 }
             }
             else
             {
-                InfyPOS.Processors.BillManager.Instance.SaveBill(billlist);
+                billlist = InfyPOS.Processors.BillManager.Instance.SaveBill(billlist);
             }
             
             foreach (var bill in billlist)

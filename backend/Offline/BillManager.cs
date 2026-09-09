@@ -456,22 +456,8 @@ namespace InfyPOS.Processors
                             }
                         }
 
-                        // MASTER assigns authoritative bill numbers under lock
-                        if (Data.Company.Exists(e => e.id == draft.companyid) &&
-                            Data.Company.Find(e => e.id == draft.companyid).billno > 0)
-                        {
-                            draft.index = Data.Company.Find(e => e.id == draft.companyid).billno;
-                            Data.Company.Find(e => e.id == draft.companyid).billno = 0;
-                        }
-                        else if (Bills.Exists(e => e.billdate.Date == draft.billdate.Date && e.companyid == draft.companyid))
-                        {
-                            draft.index = Bills.FindAll(e => e.billdate.Date == draft.billdate.Date && e.companyid == draft.companyid).Max(e => e.index) + 1;
-                        }
-                        else
-                        {
-                            draft.index = NoSequenceManager.Instance.GetNo("bill", draft.companyid, draft.billdate.Date) + 1;
-                        }
-                        draft.billno = GetBillNo(Data.BillPrefix, draft);
+                        // One sequence for MASTER + CLIENT: only MASTER assigns index / billno.
+                        AssignBillIndexAndNumber(draft, true);
                         draft.createdon = DateTime.Now;
                         if (draft.locationid <= 0 && Data != null)
                             draft.locationid = Data.locationid;
@@ -482,10 +468,10 @@ namespace InfyPOS.Processors
                     }
 
                     PersistBill(false);
+                    PersistMasters();
                     if (stockChanged && Stocks != null)
                     {
                         Store.WriteAllBytes(OfflineDataFile.Stock, Processors.DataTableCustomFormatter.Serialize(Stocks, true));
-                        PersistMasters();
                     }
 
                     result.completed = true;
@@ -1005,33 +991,79 @@ namespace InfyPOS.Processors
 
         internal void UpdateBillNo(List<OfflineClient.Bill> billlist)
         {
-            foreach (var currentBill in billlist)
+            if (Quanto.MachineConfig.IsClient)
+                return;
+
+            lock (Instance)
             {
-                if (InfyPOS.Processors.BillManager.Instance.Data.Company.Find(e => e.id == currentBill.companyid).billno > 0)
-                {
-                    currentBill.index = InfyPOS.Processors.BillManager.Instance.Data.Company.Find(e => e.id == currentBill.companyid).billno;
-                }
-                else if (Bills.Exists(e => e.billdate == currentBill.billdate && e.companyid == currentBill.companyid))
-                {
-                    currentBill.index = Bills.FindAll(e => e.billdate == currentBill.billdate && e.companyid == currentBill.companyid).Max(e => e.index) + 1;
-                }
-                else
-                {
-                    currentBill.index = NoSequenceManager.Instance.GetNo("bill", currentBill.companyid, currentBill.billdate.Date) + 1;
-                }
-                currentBill.billno = GetBillNo(Data.BillPrefix, currentBill);
+                EnsureTransactionFilesLoaded();
+                foreach (var currentBill in billlist)
+                    AssignBillIndexAndNumber(currentBill, false);
             }
         }
+
+        /// <summary>
+        /// Next bill index for this company+date from MASTER's bill list only.
+        /// Do not call on CLIENT — CLIENT receives the number from MASTER after upload.
+        /// </summary>
+        private void AssignBillIndexAndNumber(OfflineClient.Bill bill, bool consumeStartNumber)
+        {
+            var company = Data != null && Data.Company != null
+                ? Data.Company.Find(e => e.id == bill.companyid)
+                : null;
+
+            if (company != null && company.billno > 0)
+            {
+                bill.index = company.billno;
+                if (consumeStartNumber)
+                {
+                    company.billno = 0;
+                    PersistMasters();
+                }
+            }
+            else if (Bills != null && Bills.Exists(e => e.billdate.Date == bill.billdate.Date && e.companyid == bill.companyid))
+            {
+                bill.index = Bills.FindAll(e => e.billdate.Date == bill.billdate.Date && e.companyid == bill.companyid).Max(e => e.index) + 1;
+            }
+            else
+            {
+                bill.index = NoSequenceManager.Instance.GetNo("bill", bill.companyid, bill.billdate.Date) + 1;
+            }
+            bill.billno = GetBillNo(Data.BillPrefix, bill);
+        }
+
+        private static void CopyMasterBillNumbers(List<OfflineClient.Bill> local, List<OfflineClient.Bill> saved)
+        {
+            if (local == null || saved == null || saved.Count == 0)
+                return;
+            if (saved.Count != local.Count)
+            {
+                local.Clear();
+                local.AddRange(saved);
+                return;
+            }
+            for (var i = 0; i < local.Count; i++)
+            {
+                local[i].index = saved[i].index;
+                local[i].billno = saved[i].billno;
+                local[i].createdon = saved[i].createdon;
+                if (saved[i].locationid > 0)
+                    local[i].locationid = saved[i].locationid;
+            }
+        }
+
         internal List<OfflineClient.Bill> SaveBill(List<OfflineClient.Bill> billlist)
         {
-            if (Bills == null)
-                Bills = new List<OfflineClient.Bill>();
-
             // CLIENT: authoritative save only on MASTER via HTTP (no local .data).
             if (Quanto.MachineConfig.IsClient)
             {
+                if (Bills == null)
+                    Bills = new List<OfflineClient.Bill>();
+
                 foreach (var currentBill in billlist)
                 {
+                    currentBill.index = 0;
+                    currentBill.billno = null;
                     currentBill.createdon = DateTime.Now;
                     if (CurrentUser != null)
                     {
@@ -1055,57 +1087,58 @@ namespace InfyPOS.Processors
                         push?.errormessage ?? "Master server unavailable");
 
                 var saved = push.bills != null && push.bills.Count > 0 ? push.bills : billlist;
-                // UI session list only — not persisted as business store
-                Bills.AddRange(saved);
-                return saved;
+                CopyMasterBillNumbers(billlist, saved);
+                Bills.AddRange(billlist);
+                return billlist;
             }
 
-            foreach (var currentBill in billlist)
+            lock (Instance)
             {
-                if (InfyPOS.Processors.BillManager.Instance.Data.Company.Find(e => e.id == currentBill.companyid).billno > 0)
+                EnsureTransactionFilesLoaded();
+                foreach (var currentBill in billlist)
                 {
-                    currentBill.index = InfyPOS.Processors.BillManager.Instance.Data.Company.Find(e => e.id == currentBill.companyid).billno;
-                    InfyPOS.Processors.BillManager.Instance.Data.Company.Find(e => e.id == currentBill.companyid).billno = 0;
-                    InfyPOS.Processors.BillManager.Instance.PersistMasters();
-                }
-                else if (Bills.Exists(e => e.billdate == currentBill.billdate && e.companyid == currentBill.companyid))
-                {
-                    currentBill.index = Bills.FindAll(e => e.billdate == currentBill.billdate && e.companyid == currentBill.companyid).Max(e => e.index) + 1;
-                }
-                else
-                {
-                    currentBill.index = NoSequenceManager.Instance.GetNo("bill", currentBill.companyid, currentBill.billdate.Date) + 1;
-                }
-                currentBill.createdon = DateTime.Now;
-                currentBill.createdby = CurrentUser.id;
-                if (CurrentUser.employeeid > 0)
-                {
-                    if (Data.Employee.Exists(e => e.id == CurrentUser.employeeid))
+                    AssignBillIndexAndNumber(currentBill, true);
+                    currentBill.createdon = DateTime.Now;
+                    currentBill.createdby = CurrentUser.id;
+                    if (CurrentUser.employeeid > 0)
                     {
-                        currentBill.biller = Data.Employee.Find(e => e.id == CurrentUser.employeeid).name;
+                        if (Data.Employee.Exists(e => e.id == CurrentUser.employeeid))
+                        {
+                            currentBill.biller = Data.Employee.Find(e => e.id == CurrentUser.employeeid).name;
+                        }
                     }
+                    currentBill.counterid = Data.counterid;
+                    currentBill.locationid = Data.locationid;
                 }
-                currentBill.counterid = Data.counterid;
-                currentBill.locationid = Data.locationid;
-                currentBill.billno = GetBillNo(Data.BillPrefix, currentBill);
+                Bills.AddRange(billlist);
+                PersistBill(false);
+                return billlist;
             }
-            Bills.AddRange(billlist);
-            PersistBill(false);
-            return billlist;
         }
         public string GetBillNo(string format, OfflineClient.Settlement bill)
         {
             format = format.Replace("[MM]", bill.settlementon.ToString("MM")).Replace("[DD]",
                 bill.settlementon.ToString("dd")).Replace("[YY]", bill.settlementon.ToString("yy"));
             format = format.Replace("[CMP]", Data.Company.Find(e => e.id == bill.companyid).billprefix);
-            return format.Replace("[CNT]", Data.CounterPrefix).Replace("[NO]", bill.index.ToString("N0"));
+            return format.Replace("[CNT]", SharedBillCounterToken()).Replace("[NO]", bill.index.ToString("N0"));
         }
         public string GetBillNo(string format, OfflineClient.Bill bill)
         {
             format = format.Replace("[MM]", bill.billdate.ToString("MM")).Replace("[DD]",
                 bill.billdate.ToString("dd")).Replace("[YY]", bill.billdate.ToString("yy"));
             format = format.Replace("[CMP]", Data.Company.Find(e => e.id == bill.companyid).billprefix);
-            return format.Replace("[CNT]", Data.CounterPrefix).Replace("[NO]", bill.index.ToString("N0"));
+            return format.Replace("[CNT]", SharedBillCounterToken()).Replace("[NO]", bill.index.ToString("N0"));
+        }
+
+        /// <summary>
+        /// [CNT] must be the same on every machine. Do not use per-machine CounterPrefix (that produced BQT vs BQR).
+        /// Location code comes from MASTER data and is shared by all clients.
+        /// </summary>
+        private string SharedBillCounterToken()
+        {
+            if (Data != null && Data.Location != null && !string.IsNullOrEmpty(Data.Location.code))
+                return Data.Location.code;
+            return "";
         }
 
 
@@ -1268,7 +1301,7 @@ namespace InfyPOS.Processors
             {
                 if (list.Exists(e => e.type == type && e.companyid == companyid && e.date == date.Date))
                 {
-                    return list.Find(e => e.type == type && e.date == date.Date).no;
+                    return list.Find(e => e.type == type && e.companyid == companyid && e.date == date.Date).no;
                 }
                 return 0;
             }

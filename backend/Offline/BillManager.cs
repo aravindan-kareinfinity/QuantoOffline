@@ -77,9 +77,11 @@ namespace InfyPOS.Processors
                 CustomerManager.Instance.ClearMemory();
             }
 
-            // CLIENT must not keep local bill/settlement stores as source of truth
-            Bills = new List<OfflineClient.Bill>();
-            Settlements = new List<OfflineClient.Settlement>();
+            // CLIENT must not persist bills locally. Keep any session list already loaded from MASTER.
+            if (Bills == null)
+                Bills = new List<OfflineClient.Bill>();
+            if (Settlements == null)
+                Settlements = new List<OfflineClient.Settlement>();
             initialized = true;
         }
 
@@ -388,6 +390,15 @@ namespace InfyPOS.Processors
         /// </summary>
         public void EnsureTransactionFilesLoaded()
         {
+            if (Quanto.MachineConfig.IsClient)
+            {
+                if (Bills == null)
+                    Bills = new List<OfflineClient.Bill>();
+                if (Settlements == null)
+                    Settlements = new List<OfflineClient.Settlement>();
+                return;
+            }
+
             if (Bills == null)
             {
                 if (Store.Exists(OfflineDataFile.Bill))
@@ -494,6 +505,8 @@ namespace InfyPOS.Processors
                         result.bills.Add(draft);
                         result.accepted++;
                     }
+
+                    SyncSettlementBillNumbers(incoming);
 
                     PersistBill(false);
                     PersistMasters();
@@ -882,6 +895,8 @@ namespace InfyPOS.Processors
                         logo = row["logo"] != DBNull.Value ? Convert.ToString(row["logo"]) : "",
                         address = row["address"] != DBNull.Value ? Convert.ToString(row["address"]) : "",
                         id = row["id"] != DBNull.Value ? Convert.ToInt64(row["id"]) : 0,
+                        billprefix = row.Table.Columns.Contains("billprefix") && row["billprefix"] != DBNull.Value
+                            ? Convert.ToString(row["billprefix"]) : ""
                     });
                 }
 
@@ -933,6 +948,27 @@ namespace InfyPOS.Processors
                     }
                 }
 
+
+                if (Company != null)
+                {
+                    foreach (var company in Company)
+                    {
+                        if (string.IsNullOrEmpty(company.billprefix) && currentData != null && currentData.Company != null)
+                        {
+                            var previous = currentData.Company.Find(e => e.id == company.id);
+                            if (previous != null && !string.IsNullOrEmpty(previous.billprefix))
+                                company.billprefix = previous.billprefix;
+                        }
+                        if (string.IsNullOrEmpty(company.billprefix) && AutoNumber != null)
+                        {
+                            var auto = AutoNumber.Find(e => e.companyid == company.id && !string.IsNullOrEmpty(e.prefix));
+                            if (auto != null)
+                                company.billprefix = auto.prefix;
+                        }
+                        if (string.IsNullOrEmpty(company.billprefix))
+                            company.billprefix = company.code ?? "";
+                    }
+                }
 
             }
             public long organizationid { get; set; }
@@ -1019,8 +1055,23 @@ namespace InfyPOS.Processors
 
         internal void UpdateBillNo(List<OfflineClient.Bill> billlist)
         {
-            if (Quanto.MachineConfig.IsClient)
+            if (billlist == null || billlist.Count == 0)
                 return;
+
+            if (Quanto.MachineConfig.IsClient)
+            {
+                try
+                {
+                    LoadClientBillsFromMaster(billlist[0].billdate);
+                }
+                catch
+                {
+                    // Preview numbers from whatever is already in memory
+                }
+                foreach (var currentBill in billlist)
+                    AssignBillIndexAndNumber(currentBill, false);
+                return;
+            }
 
             lock (Instance)
             {
@@ -1057,7 +1108,32 @@ namespace InfyPOS.Processors
             {
                 bill.index = NoSequenceManager.Instance.GetNo("bill", bill.companyid, bill.billdate.Date) + 1;
             }
-            bill.billno = GetBillNo(Data.BillPrefix, bill);
+            bill.billno = GetBillNo(Data != null ? Data.BillPrefix : null, bill);
+            if (string.IsNullOrWhiteSpace(bill.billno))
+                bill.billno = bill.index.ToString();
+        }
+
+        internal void PreviewBillNo(OfflineClient.Bill bill)
+        {
+            if (bill == null)
+                return;
+            AssignBillIndexAndNumber(bill, false);
+        }
+
+        private static void SyncSettlementBillNumbers(List<OfflineClient.Bill> bills)
+        {
+            if (bills == null || bills.Count == 0)
+                return;
+            foreach (var bill in bills)
+            {
+                var items = bill.billattributes != null && bill.billattributes.settlement != null
+                    ? bill.billattributes.settlement.Billsettlement
+                    : null;
+                if (items == null)
+                    continue;
+                for (var i = 0; i < items.Count && i < bills.Count; i++)
+                    items[i].billno = bills[i].billno;
+            }
         }
 
         private static void CopyMasterBillNumbers(List<OfflineClient.Bill> local, List<OfflineClient.Bill> saved)
@@ -1090,8 +1166,6 @@ namespace InfyPOS.Processors
 
                 foreach (var currentBill in billlist)
                 {
-                    currentBill.index = 0;
-                    currentBill.billno = null;
                     currentBill.createdon = DateTime.Now;
                     if (CurrentUser != null)
                     {
@@ -1116,6 +1190,12 @@ namespace InfyPOS.Processors
 
                 var saved = push.bills != null && push.bills.Count > 0 ? push.bills : billlist;
                 CopyMasterBillNumbers(billlist, saved);
+                foreach (var currentBill in billlist)
+                {
+                    if (string.IsNullOrWhiteSpace(currentBill.billno))
+                        AssignBillIndexAndNumber(currentBill, false);
+                }
+                SyncSettlementBillNumbers(billlist);
                 Bills.AddRange(billlist);
                 return billlist;
             }
@@ -1138,6 +1218,7 @@ namespace InfyPOS.Processors
                     currentBill.counterid = Data.counterid;
                     currentBill.locationid = Data.locationid;
                 }
+                SyncSettlementBillNumbers(billlist);
                 Bills.AddRange(billlist);
                 PersistBill(false);
                 return billlist;
@@ -1145,17 +1226,43 @@ namespace InfyPOS.Processors
         }
         public string GetBillNo(string format, OfflineClient.Settlement bill)
         {
+            if (string.IsNullOrEmpty(format))
+                format = "B[CMP][CNT][DD][MM][YY]/[NO]";
             format = format.Replace("[MM]", bill.settlementon.ToString("MM")).Replace("[DD]",
                 bill.settlementon.ToString("dd")).Replace("[YY]", bill.settlementon.ToString("yy"));
-            format = format.Replace("[CMP]", Data.Company.Find(e => e.id == bill.companyid).billprefix);
-            return format.Replace("[CNT]", Data.CounterPrefix ?? "").Replace("[NO]", bill.index.ToString("N0"));
+            var cmp = "";
+            if (Data != null && Data.Company != null && Data.Company.Exists(e => e.id == bill.companyid))
+            {
+                var company = Data.Company.Find(e => e.id == bill.companyid);
+                cmp = company.billprefix ?? "";
+                if (string.IsNullOrEmpty(cmp))
+                    cmp = company.code ?? "";
+            }
+            format = format.Replace("[CMP]", cmp);
+            var cnt = Data != null ? (Data.CounterPrefix ?? "") : "";
+            if (string.IsNullOrEmpty(cnt) && Data != null)
+                cnt = Data.CounterCode ?? "";
+            return format.Replace("[CNT]", cnt).Replace("[NO]", bill.index.ToString());
         }
         public string GetBillNo(string format, OfflineClient.Bill bill)
         {
+            if (string.IsNullOrEmpty(format))
+                format = "B[CMP][CNT][DD][MM][YY]/[NO]";
             format = format.Replace("[MM]", bill.billdate.ToString("MM")).Replace("[DD]",
                 bill.billdate.ToString("dd")).Replace("[YY]", bill.billdate.ToString("yy"));
-            format = format.Replace("[CMP]", Data.Company.Find(e => e.id == bill.companyid).billprefix);
-            return format.Replace("[CNT]", Data.CounterPrefix ?? "").Replace("[NO]", bill.index.ToString("N0"));
+            var cmp = "";
+            if (Data != null && Data.Company != null && Data.Company.Exists(e => e.id == bill.companyid))
+            {
+                var company = Data.Company.Find(e => e.id == bill.companyid);
+                cmp = company.billprefix ?? "";
+                if (string.IsNullOrEmpty(cmp))
+                    cmp = company.code ?? "";
+            }
+            format = format.Replace("[CMP]", cmp);
+            var cnt = Data != null ? (Data.CounterPrefix ?? "") : "";
+            if (string.IsNullOrEmpty(cnt) && Data != null)
+                cnt = Data.CounterCode ?? "";
+            return format.Replace("[CNT]", cnt).Replace("[NO]", bill.index.ToString());
         }
 
 

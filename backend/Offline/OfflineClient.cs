@@ -159,6 +159,13 @@ namespace InfyPOS.Processors
                     var bill = new Bill() { Billitems = new List<BillItems>() };
                     bill.billdate = this.billdate;
                     bill.companyid = grp.Key;
+                    bill.customername = this.customername;
+                    bill.customermobileno = this.customermobileno;
+                    bill.creditbill = this.creditbill;
+                    bill.billattributes = this.billattributes;
+                    bill.counterid = this.counterid;
+                    bill.createdby = this.createdby;
+                    bill.locationid = this.locationid;
                     if (this.addiscountpercentage > 0 || grp.Sum(e => e.schemediscount) > 0)
                     {
                         foreach (var item in grp)

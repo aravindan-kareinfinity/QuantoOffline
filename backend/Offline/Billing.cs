@@ -76,6 +76,8 @@ namespace Quanto.Offline
             cmbProduts.SelectedItem = null;
             cmbTax.SelectedItem = null;
             txtBarcode.Focus();
+            if (currentBillList == null || currentBillList.Count == 0)
+                UpdateBillScroller(null);
 
             if (PromotionEnabled)
             {
@@ -349,6 +351,8 @@ namespace Quanto.Offline
                 Add2List(billitem);
             }
             ShowTotal();
+            if (currentBillList == null || currentBillList.Count == 0)
+                UpdateBillScroller(null);
             if (PromotionEnabled)
             {
                 var schemediscount = CurrentBill.schemediscount;
@@ -398,11 +402,10 @@ namespace Quanto.Offline
             listView1.Items.Clear();
             discountpercentageapplied = false;
             discountvalueapplied = false;
-            //txttotaldiscountpercentage.Text = "";
-            //txttotaldiscount.Text = "";
-            //txttotalamount.Text = "";
             txtBarcode.Text = "";
             txtBarcode.Focus();
+            if (currentBillList == null || currentBillList.Count == 0)
+                UpdateBillScroller(null);
 
         }
 
@@ -445,20 +448,13 @@ namespace Quanto.Offline
                         MessageBoxIcon.Warning);
                 }
             }
-            if (InfyPOS.Processors.BillManager.Instance.Bills == null)
-                InfyPOS.Processors.BillManager.Instance.Bills = new List<OfflineClient.Bill>();
-            if (InfyPOS.Processors.BillManager.Instance.Bills.Exists(e => e.billdate.Date == billdate.Date))
-            {
-                UpdateBillScroller(null);
-            }
             else
             {
-                billScroller.Minimum = 0;
-                billScroller.Maximum = 0;
-                billScroller.Value = 0;
-                lblLastBillNo.Text = "";
-                lblAvailable.Text = "Available Bills - 0";
+                InfyPOS.Processors.BillManager.Instance.EnsureTransactionFilesLoaded();
             }
+            if (InfyPOS.Processors.BillManager.Instance.Bills == null)
+                InfyPOS.Processors.BillManager.Instance.Bills = new List<OfflineClient.Bill>();
+            UpdateBillScroller(null);
         }
         private void dateToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -615,26 +611,70 @@ namespace Quanto.Offline
         private List<InfyPOS.Processors.OfflineClient.Bill> currentBillList = null;
         private void UpdateBillScroller(InfyPOS.Processors.OfflineClient.Bill bill)
         {
+            var bills = InfyPOS.Processors.BillManager.Instance.Bills;
+            if (bills == null)
+            {
+                lblAvailable.Text = "Available Bills - 0";
+                lblLastBillNo.Text = "";
+                return;
+            }
+
+            currentBillList = bills.FindAll(ex => ex.billdate.Date == billdate.Date);
+            if (bill != null && !currentBillList.Contains(bill))
+                currentBillList.Add(bill);
+
+            if (currentBillList.Count == 0)
+            {
+                billScroller.Minimum = 0;
+                billScroller.Maximum = 0;
+                billScroller.Value = 0;
+                lblAvailable.Text = "Available Bills - 0";
+                lblLastBillNo.Text = NextBillNoText();
+                return;
+            }
+
+            billScroller.Minimum = 1;
+            billScroller.Maximum = currentBillList.Count;
+            var index = currentBillList.Count;
+            if (bill != null)
+            {
+                var found = currentBillList.IndexOf(bill);
+                if (found >= 0)
+                    index = found + 1;
+            }
+            billScroller.Value = index;
+            lblAvailable.Text = "Available Bills - " + currentBillList.Count;
+            lblLastBillNo.Text = BillNoText(currentBillList[index - 1]) + "(" + index + ")";
+        }
+
+        private static string BillNoText(InfyPOS.Processors.OfflineClient.Bill bill)
+        {
             if (bill == null)
+                return "";
+            if (!string.IsNullOrWhiteSpace(bill.billno))
+                return bill.billno;
+            if (bill.index > 0)
+                return bill.index.ToString();
+            return "";
+        }
+
+        private string NextBillNoText()
+        {
+            long companyid = 0;
+            if (CurrentBill != null && CurrentBill.Billitems != null && CurrentBill.Billitems.Count > 0)
+                companyid = CurrentBill.Billitems[0].companyid;
+            else if (InfyPOS.Processors.BillManager.Instance.Data != null &&
+                InfyPOS.Processors.BillManager.Instance.Data.Company != null &&
+                InfyPOS.Processors.BillManager.Instance.Data.Company.Count > 0)
+                companyid = InfyPOS.Processors.BillManager.Instance.Data.Company[0].id;
+
+            var preview = new InfyPOS.Processors.OfflineClient.Bill()
             {
-                currentBillList = InfyPOS.Processors.BillManager.Instance.Bills.FindAll(ex => ex.billdate.Date == billdate.Date);
-                billScroller.Minimum = 1;
-                billScroller.Maximum = currentBillList.Count;
-                billScroller.Value = billScroller.Maximum;
-                lblAvailable.Text = "Available Bills - " + billScroller.Maximum;
-                lblLastBillNo.Text = currentBillList.Last().billno + "(" + billScroller.Maximum.ToString() + ")";
-            }
-            else
-            {
-                if (currentBillList == null)
-                    currentBillList = InfyPOS.Processors.BillManager.Instance.Bills.FindAll(ex => ex.billdate.Date == billdate.Date);
-                if(!currentBillList.Contains(bill))
-                    currentBillList.Add(bill);
-                billScroller.Maximum = currentBillList.Count;
-                billScroller.Value = billScroller.Maximum;
-                lblAvailable.Text = "Available Bills - " + billScroller.Maximum;
-                lblLastBillNo.Text = bill.billno + "(" + billScroller.Maximum.ToString() + ")";
-            }
+                billdate = billdate,
+                companyid = companyid
+            };
+            InfyPOS.Processors.BillManager.Instance.PreviewBillNo(preview);
+            return BillNoText(preview);
         }
 
         private bool skipprinter = false;
@@ -691,15 +731,13 @@ namespace Quanto.Offline
             }
 
             var billlist = CurrentBill.CreateBills(InfyPOS.Processors.BillManager.Instance.Data.Tax);
-            
+            InfyPOS.Processors.BillManager.Instance.UpdateBillNo(billlist);
 
             try
             {
             if (InfyPOS.Processors.BillManager.Instance.Data.Autosettlement || 
                 InfyPOS.Processors.BillManager.Instance.Data.Location.autosettlement)
             {
-                if (!Quanto.MachineConfig.IsClient)
-                    InfyPOS.Processors.BillManager.Instance.UpdateBillNo(billlist);
                 Settlement settlement = new Settlement();
                 settlement.Initalize(true, billlist);
                 if (settlement.ShowDialog() == DialogResult.Cancel)
@@ -767,13 +805,13 @@ namespace Quanto.Offline
             if (currentBillList != null && currentBillList.Count >= index)
             {
                 if (index == 0) index = 1;
-                lblLastBillNo.Text = currentBillList[index - 1].billno + "(" + index.ToString() + ")";
+                lblLastBillNo.Text = BillNoText(currentBillList[index - 1]) + "(" + index.ToString() + ")";
             }
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
-            if (currentBillList != null)
+            if (currentBillList != null && currentBillList.Count > 0 && billScroller.Value > 0)
             {
                 PrintBill(currentBillList[billScroller.Value - 1]);
             }

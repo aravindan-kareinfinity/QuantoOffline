@@ -33,6 +33,7 @@ namespace Quanto
         private Label _lblFoundMasterDetail;
         private ListBox _lstMasters;
         private Button _btnConnect;
+        private Button _btnSelectBack;
         private Button _btnSearchAgain;
 
         private List<MasterDiscovery.FoundMaster> _foundMasters = new List<MasterDiscovery.FoundMaster>();
@@ -46,7 +47,7 @@ namespace Quanto
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
-            ClientSize = new Size(560, 460);
+            ClientSize = new Size(560, 500);
             BackColor = Color.White;
             Font = new Font("Segoe UI", 9F);
 
@@ -100,18 +101,18 @@ namespace Quanto
                 "• This computer must remain powered on when clients need business data.\n\n" +
                 "Changing role does not copy or delete business data files.",
                 70);
-            var btnMasterBack = CreateSecondaryButton("Back", 360);
+            var btnMasterBack = CreateSecondaryButton("Back", 420);
             btnMasterBack.Click += (s, e) => ShowPanel(_panelRole);
             _panelMasterConfirm.Controls.Add(btnMasterBack);
-            var btnMasterContinue = CreatePrimaryButton("Continue", 360, 280);
+            var btnMasterContinue = CreatePrimaryButton("Continue", 420, 160, 176);
             btnMasterContinue.Click += (s, e) => CompleteMasterSetup();
             _panelMasterConfirm.Controls.Add(btnMasterContinue);
 
             // Master ready
             _panelMasterReady = CreatePanel();
             AddTitle(_panelMasterReady, "MASTER CONFIGURED");
-            _lblMasterReadyBody = AddMultiline(_panelMasterReady, "", 70);
-            var btnMasterFinish = CreatePrimaryButton("FINISH", 380, 200);
+            _lblMasterReadyBody = AddMultiline(_panelMasterReady, "", 70, 330);
+            var btnMasterFinish = CreatePrimaryButton("FINISH", 420, 200);
             btnMasterFinish.Click += (s, e) => { DialogResult = DialogResult.OK; Close(); };
             _panelMasterReady.Controls.Add(btnMasterFinish);
 
@@ -119,12 +120,13 @@ namespace Quanto
             _panelClientSearch = CreatePanel();
             AddTitle(_panelClientSearch, "CLIENT COMPUTER");
             AddSubtitle(_panelClientSearch, "This computer will connect to an existing MASTER.");
-            _lblClientSearchStatus = AddMultiline(_panelClientSearch, "Searching for MASTER...", 90);
-            _btnSearchAgain = CreateSecondaryButton("Search Again", 360);
+            _lblClientSearchStatus = AddMultiline(_panelClientSearch, "Searching for MASTER...", 90, 280);
+            _btnSearchAgain = CreateSecondaryButton("Search Again", 420, 176);
             _btnSearchAgain.Click += (s, e) => BeginSearch();
             _btnSearchAgain.Visible = false;
+            _btnSearchAgain.Size = new Size(140, 40);
             _panelClientSearch.Controls.Add(_btnSearchAgain);
-            var btnClientBack = CreateSecondaryButton("Back", 400);
+            var btnClientBack = CreateSecondaryButton("Back", 420);
             btnClientBack.Click += (s, e) =>
             {
                 if (_mode == WizardMode.ChangeMasterOnly)
@@ -139,12 +141,23 @@ namespace Quanto
             // Client select / found
             _panelClientSelect = CreatePanel();
             AddTitle(_panelClientSelect, "MASTER FOUND");
-            _lblFoundMasterDetail = AddMultiline(_panelClientSelect, "", 60);
+            _lblFoundMasterDetail = new Label
+            {
+                Text = "",
+                Font = new Font("Segoe UI", 10F),
+                Location = new Point(40, 58),
+                Size = new Size(480, 90),
+                ForeColor = Color.FromArgb(40, 40, 40)
+            };
+            _panelClientSelect.Controls.Add(_lblFoundMasterDetail);
             _lstMasters = new ListBox
             {
-                Location = new Point(40, 200),
-                Size = new Size(480, 120),
-                Font = new Font("Segoe UI", 9F),
+                Location = new Point(40, 155),
+                Size = new Size(480, 145),
+                Font = new Font("Segoe UI", 10F),
+                BorderStyle = BorderStyle.FixedSingle,
+                IntegralHeight = false,
+                ItemHeight = 24,
                 Visible = false
             };
             _lstMasters.SelectedIndexChanged += (s, e) =>
@@ -153,22 +166,22 @@ namespace Quanto
                 UpdateFoundDetail();
             };
             _panelClientSelect.Controls.Add(_lstMasters);
-            _btnConnect = CreatePrimaryButton("CONNECT TO MASTER", 340, 200);
+            _btnConnect = CreatePrimaryButton("CONNECT TO MASTER", 420, 220, 176);
             _btnConnect.Click += (s, e) => ConnectToSelectedMaster();
             _panelClientSelect.Controls.Add(_btnConnect);
-            var btnSelectBack = CreateSecondaryButton("Back", 390);
-            btnSelectBack.Click += (s, e) =>
+            _btnSelectBack = CreateSecondaryButton("Back", 420);
+            _btnSelectBack.Click += (s, e) =>
             {
                 ShowPanel(_panelClientSearch);
                 BeginSearch();
             };
-            _panelClientSelect.Controls.Add(btnSelectBack);
+            _panelClientSelect.Controls.Add(_btnSelectBack);
 
             // Client ready
             _panelClientReady = CreatePanel();
             AddTitle(_panelClientReady, "CLIENT READY");
-            _lblClientReadyBody = AddMultiline(_panelClientReady, "", 70);
-            var btnClientFinish = CreatePrimaryButton("FINISH", 380, 200);
+            _lblClientReadyBody = AddMultiline(_panelClientReady, "", 70, 330);
+            var btnClientFinish = CreatePrimaryButton("FINISH", 420, 200);
             btnClientFinish.Click += (s, e) => { DialogResult = DialogResult.OK; Close(); };
             _panelClientReady.Controls.Add(btnClientFinish);
 
@@ -253,8 +266,7 @@ namespace Quanto
             _lblMasterReadyBody.Text =
                 "Device ID:\n" + MachineConfig.DeviceId + "\n\n" +
                 "API:\nhttp://" + lan + ":" + MachineConfig.ApiPort + "\n\n" +
-                "Status:\n● Master configured — services start after Finish\n\n" +
-                "Listen: " + MachineConfig.ListenUrl;
+                "Status:\n● Master configured — services start after Finish";
             ShowPanel(_panelMasterReady);
         }
 
@@ -290,19 +302,38 @@ namespace Quanto
             if (_foundMasters.Count == 1)
             {
                 _selectedMaster = _foundMasters[0];
-                _lstMasters.Visible = false;
-                _lstMasters.DataSource = null;
+                LayoutMasterSelect(false);
                 UpdateFoundDetail();
                 ShowPanel(_panelClientSelect);
                 return;
             }
 
             _selectedMaster = null;
-            _lstMasters.Visible = true;
-            _lstMasters.DataSource = null;
+            LayoutMasterSelect(true);
             _lstMasters.DataSource = _foundMasters;
+            if (_lstMasters.Items.Count > 0)
+                _lstMasters.SelectedIndex = 0;
             _lblFoundMasterDetail.Text = "Select MASTER\n\nMore than one MASTER was found. Choose one:";
             ShowPanel(_panelClientSelect);
+        }
+
+        private void LayoutMasterSelect(bool showList)
+        {
+            _lstMasters.Visible = showList;
+            _lstMasters.DataSource = null;
+            if (showList)
+            {
+                _lblFoundMasterDetail.Size = new Size(480, 90);
+                _lstMasters.Location = new Point(40, 155);
+                _lstMasters.Size = new Size(480, 230);
+                _lstMasters.BringToFront();
+            }
+            else
+            {
+                _lblFoundMasterDetail.Size = new Size(480, 280);
+            }
+            _btnSelectBack.Location = new Point(40, 420);
+            _btnConnect.Location = new Point(176, 420);
         }
 
         private void UpdateFoundDetail()
@@ -311,7 +342,16 @@ namespace Quanto
             {
                 if (!_lstMasters.Visible)
                     return;
-                _lblFoundMasterDetail.Text = "Select MASTER\n\nChoose a MASTER from the list, then Connect.";
+                _lblFoundMasterDetail.Text = "Select MASTER\n\nMore than one MASTER was found. Choose one:";
+                return;
+            }
+
+            if (_lstMasters.Visible)
+            {
+                _lblFoundMasterDetail.Text =
+                    "Select MASTER\n\n" +
+                    (_selectedMaster.MachineName ?? "(unknown)") +
+                    "  —  " + _selectedMaster.IpAddress + ":" + _selectedMaster.Port;
                 return;
             }
 
@@ -434,14 +474,14 @@ namespace Quanto
             });
         }
 
-        private Label AddMultiline(Panel panel, string text, int top)
+        private Label AddMultiline(Panel panel, string text, int top, int height = 180)
         {
             var lbl = new Label
             {
                 Text = text,
                 Font = new Font("Segoe UI", 10F),
                 Location = new Point(40, top),
-                Size = new Size(480, 180),
+                Size = new Size(480, height),
                 ForeColor = Color.FromArgb(40, 40, 40)
             };
             panel.Controls.Add(lbl);
@@ -466,12 +506,12 @@ namespace Quanto
             return btn;
         }
 
-        private Button CreatePrimaryButton(string text, int top, int width = 200)
+        private Button CreatePrimaryButton(string text, int top, int width = 200, int left = 40)
         {
             return new Button
             {
                 Text = text,
-                Location = new Point(40, top),
+                Location = new Point(left, top),
                 Size = new Size(width, 40),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = Color.FromArgb(25, 118, 210),
@@ -481,13 +521,13 @@ namespace Quanto
             };
         }
 
-        private Button CreateSecondaryButton(string text, int top)
+        private Button CreateSecondaryButton(string text, int top, int left = 40)
         {
             return new Button
             {
                 Text = text,
-                Location = new Point(40, top),
-                Size = new Size(120, 32),
+                Location = new Point(left, top),
+                Size = new Size(120, 40),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = Color.White,
                 ForeColor = Color.FromArgb(60, 60, 60),

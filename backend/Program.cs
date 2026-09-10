@@ -114,6 +114,7 @@ namespace Quanto
             }
 
             MachineConfig.EnsureInitialized();
+            OfflineSync.StartIfConfigured();
 
             Console.Write("Starting");
             PrinterServiceHost hc = new PrinterServiceHost();
@@ -122,16 +123,20 @@ namespace Quanto
                 var listenUrl = MachineConfig.ListenUrl;
                 MessageBox.Show(
                     "Failed to start the local API on " + listenUrl + ".\n\n" +
-                    "The port may already be in use. Close the other application using that port, then try again.",
+                    "The port may already be in use. Close the other application using that port, then try again.\n\n" +
+                    "The application will continue. Cloud master download still runs on schedule.",
                     "Quanto.Client",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                return;
+                    MessageBoxIcon.Warning);
             }
 
             try
             {
-                Application.ApplicationExit += (s, e) => hc.StopInProcess();
+                Application.ApplicationExit += (s, e) =>
+                {
+                    OfflineSync.StopIfConfigured();
+                    hc.StopInProcess();
+                };
                 Application.Run(new OfflineApplicationContext());
             }
             catch (Exception exp)
@@ -141,6 +146,7 @@ namespace Quanto
             }
             finally
             {
+                OfflineSync.StopIfConfigured();
                 hc.StopInProcess();
             }
         }

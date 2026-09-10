@@ -33,14 +33,11 @@ namespace Quanto.Offline
             {
                 Quanto.Configform.AddOrUpdateAppSettings("ServerURL", txtServer.Text);
             }
-            if (txtOrganizationCode.Text != System.Configuration.ConfigurationManager.AppSettings["OrganizationCode"])
-            {
-                Quanto.Configform.AddOrUpdateAppSettings("OrganizationCode", txtOrganizationCode.Text);
-            }
-            if (txtLocationCode.Text != System.Configuration.ConfigurationManager.AppSettings["Locationcode"])
-            {
-                Quanto.Configform.AddOrUpdateAppSettings("Locationcode", txtLocationCode.Text);
-            }
+            Quanto.OfflineSync.RememberCloudLogin(
+                txtOrganizationCode.Text,
+                txtLocationCode.Text,
+                txtusername.Text,
+                txtpassword.Text);
             LoadMasterData();
         }
 
@@ -146,6 +143,13 @@ namespace Quanto.Offline
             label4.Text = "Cloud Server";
             txtOrganizationCode.Text = System.Configuration.ConfigurationManager.AppSettings["OrganizationCode"];
             txtLocationCode.Text = System.Configuration.ConfigurationManager.AppSettings["Locationcode"];
+            txtusername.Text = System.Configuration.ConfigurationManager.AppSettings["CloudUsername"];
+            txtpassword.Text = System.Configuration.ConfigurationManager.AppSettings["CloudPassword"];
+            if (string.IsNullOrWhiteSpace(txtOrganizationCode.Text))
+            {
+                checkBox1.Checked = true;
+                txtOrganizationCode.Enabled = true;
+            }
         }
 
         private void checkBox1_CheckStateChanged(object sender, EventArgs e)

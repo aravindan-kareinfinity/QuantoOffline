@@ -436,12 +436,6 @@ namespace Quanto
                         Quanto.KeepAlive.Instance.Stop();
                     }
 
-                    if (!string.IsNullOrEmpty(System.Configuration.ConfigurationManager.AppSettings["EnableOffline"]) &&
-                       System.Configuration.ConfigurationManager.AppSettings["EnableOffline"].ToLower() == "true")
-                    {
-                        Quanto.OfflineSync.Instance.Stop();
-                    }
-
                     if (!string.IsNullOrEmpty(System.Configuration.ConfigurationManager.AppSettings["EnableDataManager"]))
                     {
                         Quanto.Data.DataManager.Instance.Stop();

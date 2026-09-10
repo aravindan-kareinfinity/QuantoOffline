@@ -454,7 +454,9 @@ namespace ReportLibrary
                     HeaderHeight = height;
                 if (float.TryParse(GetAttribValue(xmlNode, "LineHeight"), out height))
                     LineHeight = height;
-                int.TryParse(GetAttribValue(xmlNode, "length"), out length);
+                int parsedLength;
+                if (int.TryParse(GetAttribValue(xmlNode, "length"), out parsedLength))
+                    length = parsedLength;
 
                 DisableGrid = GetAttribValue(xmlNode, "DisableGrid") == "True";
                 WrapRow = GetAttribValue(xmlNode, "WrapRow") == "True";
@@ -465,6 +467,8 @@ namespace ReportLibrary
             {
                 get
                 {
+                    if (length <= 0)
+                        return 0;
                     return length - (AvailableRows % length);
                 }
             }
@@ -473,6 +477,16 @@ namespace ReportLibrary
             public float HeaderHeight { get;  set; }
 
             public float LineHeight { get; set; }
+
+            int PageRowCount
+            {
+                get
+                {
+                    if (length > 0)
+                        return length;
+                    return AvailableRows > 0 ? AvailableRows : 1;
+                }
+            }
 
             internal bool Render(System.Collections.IEnumerator ien, SortedDictionary<string, object> Additional, CodeWriter cw)
             {
@@ -488,7 +502,7 @@ namespace ReportLibrary
                         item.Render(ien.Current, Additional, cw);
                         cw.AddLines();
                     }
-                    if (printedItems % length == 0 && printedItems != AvailableRows)
+                    if (printedItems % PageRowCount == 0 && printedItems != AvailableRows)
                     {
                         return false;
                     }
@@ -509,7 +523,7 @@ namespace ReportLibrary
                         if (item.Render(ien.Current, Additional, bw))
                             bw.FeedLines(1);
                     }
-                    if (printedItems % length == 0 && printedItems != AvailableRows)
+                    if (printedItems % PageRowCount == 0 && printedItems != AvailableRows)
                     {
                         return false;
                     }
@@ -540,7 +554,9 @@ namespace ReportLibrary
                 HasValue = GetAttribValue(xmlNode, "HasValue");
                 HideValue = GetAttribValue(xmlNode, "HideValue");
                 IsTable = GetAttribValue(xmlNode, "Type") == "Table";
-                int.TryParse(GetAttribValue(xmlNode, "length"), out length);
+                int parsedLength;
+                if (int.TryParse(GetAttribValue(xmlNode, "length"), out parsedLength))
+                    length = parsedLength;
                 base.Parse(xmlNode);
             }
 
@@ -548,6 +564,8 @@ namespace ReportLibrary
             {
                 get
                 {
+                    if (length <= 0)
+                        return 0;
                     return length - (AvailableRows % length);
                 }
             }
@@ -590,7 +608,7 @@ namespace ReportLibrary
                         item.Render(ien.Current, Additional, cw);
                         cw.AddLines();
                     }
-                    if (printedItems % length == 0 && printedItems != AvailableRows)
+                    if (length > 0 && printedItems % length == 0 && printedItems != AvailableRows)
                     {
                         return false;
                     }
@@ -622,7 +640,7 @@ namespace ReportLibrary
                         if (item.Render(ien.Current, Additional, bw))
                             bw.FeedLines(1);
                     }
-                    if (printedItems % length == 0 && printedItems != AvailableRows)
+                    if (length > 0 && printedItems % length == 0 && printedItems != AvailableRows)
                     {
                         return false;
                     }

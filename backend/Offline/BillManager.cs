@@ -1148,25 +1148,14 @@ namespace InfyPOS.Processors
             format = format.Replace("[MM]", bill.settlementon.ToString("MM")).Replace("[DD]",
                 bill.settlementon.ToString("dd")).Replace("[YY]", bill.settlementon.ToString("yy"));
             format = format.Replace("[CMP]", Data.Company.Find(e => e.id == bill.companyid).billprefix);
-            return format.Replace("[CNT]", SharedBillCounterToken()).Replace("[NO]", bill.index.ToString("N0"));
+            return format.Replace("[CNT]", Data.CounterPrefix ?? "").Replace("[NO]", bill.index.ToString("N0"));
         }
         public string GetBillNo(string format, OfflineClient.Bill bill)
         {
             format = format.Replace("[MM]", bill.billdate.ToString("MM")).Replace("[DD]",
                 bill.billdate.ToString("dd")).Replace("[YY]", bill.billdate.ToString("yy"));
             format = format.Replace("[CMP]", Data.Company.Find(e => e.id == bill.companyid).billprefix);
-            return format.Replace("[CNT]", SharedBillCounterToken()).Replace("[NO]", bill.index.ToString("N0"));
-        }
-
-        /// <summary>
-        /// [CNT] must be the same on every machine. Do not use per-machine CounterPrefix (that produced BQT vs BQR).
-        /// Location code comes from MASTER data and is shared by all clients.
-        /// </summary>
-        private string SharedBillCounterToken()
-        {
-            if (Data != null && Data.Location != null && !string.IsNullOrEmpty(Data.Location.code))
-                return Data.Location.code;
-            return "";
+            return format.Replace("[CNT]", Data.CounterPrefix ?? "").Replace("[NO]", bill.index.ToString("N0"));
         }
 
 

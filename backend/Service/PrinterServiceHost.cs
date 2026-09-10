@@ -396,7 +396,7 @@ namespace Quanto
                 if (!string.IsNullOrEmpty(System.Configuration.ConfigurationManager.AppSettings["EnableOffline"]) &&
                    System.Configuration.ConfigurationManager.AppSettings["EnableOffline"].ToLower() == "true")
                 {
-                    Quanto.Logger.Current.Info("Offline service enabled...");
+                    Quanto.Logger.Current.Info("Scheduled master download enabled (EnableOffline)...");
                     Quanto.OfflineSync.Instance.Start();
                 }
                 else

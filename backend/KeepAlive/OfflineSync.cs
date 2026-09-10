@@ -1,14 +1,14 @@
-﻿using Quanto;
-using Newtonsoft.Json;
+﻿using InfyPOS.Processors;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
+using System.Configuration;
+using System.Threading;
 
 namespace Quanto
 {
+    /// <summary>
+    /// MASTER only: download cloud master/stock every OfflineSyncTimer minutes (default 15).
+    /// Started when EnableOffline=true.
+    /// </summary>
     public class OfflineSync
     {
         private static OfflineSync instance;
@@ -17,82 +17,114 @@ namespace Quanto
             get
             {
                 if (instance == null)
-                {
-                    int seconds = 15;
-                    if (!string.IsNullOrEmpty(System.Configuration.ConfigurationManager.AppSettings["OfflineSyncTimer"]))
-                        int.TryParse(System.Configuration.ConfigurationManager.AppSettings["OfflineSyncTimer"],out seconds);
-
-                    instance = new OfflineSync(seconds);
-                }
+                    instance = new OfflineSync();
                 return instance;
             }
         }
-        int seconds;
-        System.Timers.Timer timer = null;
-        string OfflineSyncurl = "";
-        public OfflineSync(int seconds)
+
+        private readonly int _minutes;
+        private readonly System.Timers.Timer _timer;
+        private readonly object _runLock = new object();
+
+        public OfflineSync()
         {
-            this.seconds = seconds;
-            timer = new System.Timers.Timer(seconds * 1000);
-            timer.Elapsed += Timer_Elapsed;
-            if (!string.IsNullOrEmpty(System.Configuration.ConfigurationManager.AppSettings["OfflineSyncURL"]))
-                OfflineSyncurl = System.Configuration.ConfigurationManager.AppSettings["OfflineSyncURL"];
+            _minutes = 15;
+            var raw = ConfigurationManager.AppSettings["OfflineSyncTimer"];
+            if (!string.IsNullOrEmpty(raw))
+            {
+                int parsed;
+                if (int.TryParse(raw, out parsed) && parsed > 0)
+                    _minutes = parsed;
+            }
+
+            _timer = new System.Timers.Timer(_minutes * 60 * 1000d);
+            _timer.AutoReset = true;
+            _timer.Elapsed += Timer_Elapsed;
         }
 
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            HttpPost(OfflineSyncurl);
-        }
-
-        public class CreateRequest 
-        {
-            public string location { get; set; }
-            public string clientid { get; set; }
-            public string privatekey { get; set; }
-            public DateTime fromdate { get; set; }
-        }
-
-        private string HttpPost(string URI)
-        {
-            using (var client = new HttpClient())
+            if (!Monitor.TryEnter(_runLock))
+                return;
+            try
             {
-                var serializedProduct = JsonConvert.SerializeObject(new CreateRequest());
-                var content = new StringContent(serializedProduct, Encoding.UTF8, "application/json");
+                DownloadMasterFromCloud();
+            }
+            catch (Exception exp)
+            {
+                Logger.Current.Error("Scheduled master download failed", exp);
+            }
+            finally
+            {
+                Monitor.Exit(_runLock);
+            }
+        }
 
+        private void DownloadMasterFromCloud()
+        {
+            if (!MachineConfig.IsMaster)
+                return;
 
-                var result = Task.Run(() => client.PostAsync(URI + "/SyncController/SyncOffline", content)).Result;
-
-                if (result.IsSuccessStatusCode)
-                {
-                    string json = result.Content.ReadAsStringAsync().Result;
-                    
-                }
-                else
-                {
-                    string error = result.Content.ReadAsStringAsync().Result;
-                    Logger.Current.Info("Error on Posting Employee in-out", new Exception(error));
-                    return error;
-                }
+            var serverUrl = ConfigurationManager.AppSettings["ServerURL"];
+            if (string.IsNullOrWhiteSpace(serverUrl))
+            {
+                Logger.Current.Info("Scheduled master download skipped: ServerURL is empty.");
+                return;
             }
 
-            return "";
+            var request = new OfflineClient.WindowsOfflineRequest
+            {
+                orgainzationcode = ConfigurationManager.AppSettings["OrganizationCode"],
+                locationcode = ConfigurationManager.AppSettings["Locationcode"],
+                datatype = "master",
+                systemkey = BillManager.Instance.SystemKey(),
+                userid = BillManager.Instance.CurrentUser != null ? BillManager.Instance.CurrentUser.id : 0
+            };
+
+            if (BillManager.Instance.Data != null)
+            {
+                request.organizationid = BillManager.Instance.Data.organizationid;
+                request.locationid = BillManager.Instance.Data.locationid;
+                request.datafrom = BillManager.Instance.Data.lastSyncOn;
+            }
+
+            Logger.Current.InfoFormat("Scheduled master download starting (every {0} minute(s))", _minutes);
+            var result = ServiceProxy.Instance.DownloadMasterFromCloud(request);
+            if (result == null)
+            {
+                Logger.Current.Info("Scheduled master download returned no response.");
+                return;
+            }
+            if (result.error)
+            {
+                Logger.Current.Info("Scheduled master download error: " + result.errormessage);
+                return;
+            }
+            Logger.Current.Info("Scheduled master download completed.");
         }
 
         public void Start()
         {
-            Quanto.Logger.Current.Info("Keep alive service starting...");
-            if (string.IsNullOrEmpty(OfflineSyncurl)) return;
-            timer.Enabled = true;
-            timer.Start();
-            Quanto.Logger.Current.Info("Keep alive service started");
+            if (!MachineConfig.IsMaster)
+            {
+                Logger.Current.Info("Scheduled master download not started (this computer is not MASTER).");
+                return;
+            }
+
+            _timer.Enabled = true;
+            _timer.Start();
+            Logger.Current.InfoFormat(
+                "Scheduled master download started: every {0} minute(s) from {1}",
+                _minutes,
+                ConfigurationManager.AppSettings["ServerURL"]);
         }
 
         public void Stop()
         {
-            if (timer.Enabled)
+            if (_timer.Enabled)
             {
-                timer.Stop();
-                timer.Enabled = false;
+                _timer.Stop();
+                _timer.Enabled = false;
             }
         }
     }

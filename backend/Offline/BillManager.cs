@@ -735,21 +735,22 @@ namespace InfyPOS.Processors
 
                     foreach (var settlement in incoming)
                     {
-                        if (Data.Company.Exists(e => e.id == settlement.companyid) &&
-                            Data.Company.Find(e => e.id == settlement.companyid).settlementno > 0)
+                        if (string.IsNullOrWhiteSpace(settlement.deviceid) && !string.IsNullOrWhiteSpace(fromDeviceId))
+                            settlement.deviceid = fromDeviceId;
+
+                        var already = FindStoredSettlement(settlement);
+                        if (already != null)
                         {
-                            settlement.index = Data.Company.Find(e => e.id == settlement.companyid).settlementno;
-                            Data.Company.Find(e => e.id == settlement.companyid).settlementno = 0;
+                            result.settlements.Add(already);
+                            result.accepted++;
+                            continue;
                         }
-                        else if (Settlements.Exists(e => e.settlementon.Date == settlement.settlementon.Date && e.companyid == settlement.companyid))
-                        {
-                            settlement.index = Settlements.FindAll(e => e.settlementon.Date == settlement.settlementon.Date && e.companyid == settlement.companyid).Max(e => e.index) + 1;
-                        }
+
+                        if (string.IsNullOrWhiteSpace(settlement.code) || settlement.index <= 0)
+                            AssignSettlementIndexAndCode(settlement, true);
                         else
-                        {
-                            settlement.index = NoSequenceManager.Instance.GetNo("settlement", settlement.companyid, settlement.settlementon.Date) + 1;
-                        }
-                        settlement.code = GetBillNo(Data.SettlementPrefix, settlement);
+                            EnsureUniqueSettlementCode(settlement);
+
                         Settlements.Add(settlement);
                         result.settlements.Add(settlement);
                         result.accepted++;
@@ -781,6 +782,7 @@ namespace InfyPOS.Processors
 
             var masterdata = BufferedRealtimeCompressionEngine.Decompress(Store.ReadAllBytes(OfflineDataFile.Master));
             Data = Newtonsoft.Json.JsonConvert.DeserializeObject<BillSourceData>(System.Text.ASCIIEncoding.ASCII.GetString(masterdata));
+            ApplyLocalBillingSettings();
 
             if (Store.Exists(OfflineDataFile.Stock))
             {
@@ -1217,45 +1219,42 @@ namespace InfyPOS.Processors
             if (Settlements == null)
                 Settlements = new List<OfflineClient.Settlement>();
 
+            if (string.IsNullOrWhiteSpace(settlement.deviceid))
+                settlement.deviceid = Quanto.MachineConfig.DeviceId;
+            if (settlement.createdon == DateTime.MinValue)
+                settlement.createdon = DateTime.Now;
+
             if (Quanto.MachineConfig.IsClient)
             {
                 settlement.createdby = CurrentUser != null ? CurrentUser.id : 0;
+                AssignSettlementIndexAndCode(settlement, true);
                 var push = Quanto.ServiceProxy.Instance.UploadSettlementsToMaster(
                     new List<OfflineClient.Settlement> { settlement });
                 if (push == null || push.error)
                     throw new InvalidOperationException(
                         push?.errormessage ?? "Master server unavailable");
                 if (push.settlements != null && push.settlements.Count > 0)
-                    settlement = push.settlements[0];
-                // Session UI only — not an authoritative local store
-                Settlements.Add(settlement);
+                {
+                    settlement.index = push.settlements[0].index;
+                    settlement.code = push.settlements[0].code;
+                }
+                if (!Settlements.Exists(e =>
+                    e.companyid == settlement.companyid &&
+                    e.settlementon.Date == settlement.settlementon.Date &&
+                    string.Equals(e.code, settlement.code, StringComparison.OrdinalIgnoreCase)))
+                    Settlements.Add(settlement);
                 return true;
             }
 
-            var balance = settlement.balance;
-
-            if (InfyPOS.Processors.BillManager.Instance.Data.Company.Find(e => e.id == settlement.companyid).settlementno > 0)
+            lock (Instance)
             {
-                settlement.index = InfyPOS.Processors.BillManager.Instance.Data.Company.Find(e => e.id == settlement.companyid).settlementno;
-                InfyPOS.Processors.BillManager.Instance.Data.Company.Find(e => e.id == settlement.companyid).settlementno = 0;
-                InfyPOS.Processors.BillManager.Instance.PersistMasters();
+                EnsureTransactionFilesLoaded();
+                settlement.createdby = CurrentUser != null ? CurrentUser.id : 0;
+                AssignSettlementIndexAndCode(settlement, true);
+                Settlements.Add(settlement);
+                PersistSettlement(false);
+                return true;
             }
-            else if (Settlements.Exists(e => e.settlementon.Date == settlement.settlementon.Date &&
-            e.companyid == settlement.companyid))
-            {
-                settlement.index = Settlements.FindAll(e => e.settlementon.Date == settlement.settlementon.Date &&
-                e.companyid == settlement.companyid).Max(e => e.index) + 1;
-            }
-            else
-            {
-                settlement.index = NoSequenceManager.Instance.GetNo("settlement", settlement.companyid, settlement.settlementon.Date) + 1;
-            }
-            settlement.createdby = CurrentUser.id;
-            settlement.code = GetBillNo(Data.SettlementPrefix, settlement);
-            Settlements.Add(settlement);
-            PersistSettlement(false);
-
-            return true;
         }
 
         internal void UpdateBillNo(List<OfflineClient.Bill> billlist)
@@ -1385,11 +1384,108 @@ namespace InfyPOS.Processors
 
         private static bool SameMachineBill(OfflineClient.Bill bill)
         {
+            return SameMachineDevice(bill != null ? bill.deviceid : null);
+        }
+
+        private static bool SameMachineSettlement(OfflineClient.Settlement settlement)
+        {
+            return SameMachineDevice(settlement != null ? settlement.deviceid : null);
+        }
+
+        private static bool SameMachineDevice(string deviceid)
+        {
             var deviceId = Quanto.MachineConfig.DeviceId ?? "";
-            var billDevice = bill != null ? (bill.deviceid ?? "") : "";
-            if (string.IsNullOrEmpty(billDevice))
+            var other = deviceid ?? "";
+            if (string.IsNullOrEmpty(other))
                 return Quanto.MachineConfig.IsMaster;
-            return string.Equals(billDevice, deviceId, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(other, deviceId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void AssignSettlementIndexAndCode(OfflineClient.Settlement settlement, bool consumeStartNumber)
+        {
+            ApplyLocalBillingSettings();
+            if (string.IsNullOrWhiteSpace(settlement.deviceid))
+                settlement.deviceid = Quanto.MachineConfig.DeviceId;
+
+            var company = Data != null && Data.Company != null
+                ? Data.Company.Find(e => e.id == settlement.companyid)
+                : null;
+
+            if (company != null && company.settlementno > 0)
+            {
+                settlement.index = company.settlementno;
+                if (consumeStartNumber)
+                {
+                    company.settlementno = 0;
+                    if (Quanto.MachineConfig.IsClient)
+                        SaveLocalBillingSettings();
+                    else
+                        PersistMasters();
+                }
+            }
+            else if (Settlements != null && Settlements.Exists(e => SameMachineSettlement(e) && e.settlementon.Date == settlement.settlementon.Date && e.companyid == settlement.companyid))
+            {
+                settlement.index = Settlements.FindAll(e => SameMachineSettlement(e) && e.settlementon.Date == settlement.settlementon.Date && e.companyid == settlement.companyid).Max(e => e.index) + 1;
+            }
+            else
+            {
+                settlement.index = NoSequenceManager.Instance.GetNo("settlement", settlement.companyid, settlement.settlementon.Date) + 1;
+            }
+            settlement.code = GetBillNo(Data != null ? Data.SettlementPrefix : null, settlement);
+            if (string.IsNullOrWhiteSpace(settlement.code))
+                settlement.code = settlement.index.ToString();
+            EnsureUniqueSettlementCode(settlement);
+        }
+
+        private OfflineClient.Settlement FindStoredSettlement(OfflineClient.Settlement draft)
+        {
+            if (Settlements == null || draft == null)
+                return null;
+            return Settlements.Find(e =>
+                e.companyid == draft.companyid &&
+                e.settlementon.Date == draft.settlementon.Date &&
+                !string.IsNullOrWhiteSpace(draft.code) &&
+                string.Equals(e.code, draft.code, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(e.deviceid ?? "", draft.deviceid ?? "", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool SettlementCodeTaken(OfflineClient.Settlement settlement)
+        {
+            if (Settlements == null || settlement == null || string.IsNullOrWhiteSpace(settlement.code))
+                return false;
+            return Settlements.Exists(e =>
+                e != settlement &&
+                e.companyid == settlement.companyid &&
+                e.settlementon.Date == settlement.settlementon.Date &&
+                string.Equals(e.code ?? "", settlement.code, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void EnsureUniqueSettlementCode(OfflineClient.Settlement settlement)
+        {
+            if (settlement == null)
+                return;
+            var guard = 0;
+            while (SettlementCodeTaken(settlement) && guard++ < 10000)
+            {
+                var previous = settlement.index;
+                settlement.index++;
+                if (!string.IsNullOrWhiteSpace(settlement.code) && previous > 0)
+                    settlement.code = ReplaceLastOccurrence(settlement.code, previous.ToString(), settlement.index.ToString());
+                else
+                    settlement.code = GetBillNo(Data != null ? Data.SettlementPrefix : null, settlement);
+                if (string.IsNullOrWhiteSpace(settlement.code))
+                    settlement.code = settlement.index.ToString();
+            }
+        }
+
+        private static string ReplaceLastOccurrence(string text, string oldValue, string newValue)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(oldValue))
+                return text;
+            var at = text.LastIndexOf(oldValue, StringComparison.Ordinal);
+            if (at < 0)
+                return text + newValue;
+            return text.Substring(0, at) + newValue + text.Substring(at + oldValue.Length);
         }
 
         internal void PreviewBillNo(OfflineClient.Bill bill)

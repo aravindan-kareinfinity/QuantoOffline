@@ -668,7 +668,7 @@ namespace InfyPOS.Processors
             public long counterid { get; set; }
             public DateTime settlementon { get; set; }
             public DateTime createdon { get; set; }
-            
+            public string deviceid { get; set; }
             public string code { get; set; }
             public decimal receivable { get; set; }
             public string reason { get; set; }

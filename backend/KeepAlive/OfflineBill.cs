@@ -1,11 +1,6 @@
-﻿using Quanto;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace Quanto
 {
@@ -17,10 +12,7 @@ namespace Quanto
             get
             {
                 if (instance == null)
-                {
                     instance = new OfflineBill();
-                    instance.Intiaize();
-                }
                 return instance;
             }
         }
@@ -29,157 +21,171 @@ namespace Quanto
         public bool running { get; set; }
         public string AutoSync_Mode { get; set; }
         public int AutoSync_Cycle { get; set; }
-        public OfflineBill()
+        private readonly object _runLock = new object();
+
+        public static void StartIfConfigured()
         {
-            
+            Instance.Intiaize();
         }
 
         public void Intiaize()
         {
-            if (InfyPOS.Processors.BillManager.Instance.Data != null &&
-                InfyPOS.Processors.BillManager.Instance.Data.AutoSync)
+            Stop();
+            running = false;
+            seconds = 0;
+
+            if (InfyPOS.Processors.BillManager.Instance.Data == null ||
+                !InfyPOS.Processors.BillManager.Instance.Data.AutoSync)
             {
-                if (AutoSync_Mode != InfyPOS.Processors.BillManager.Instance.Data.AutoSync_Mode ||
-                AutoSync_Cycle != InfyPOS.Processors.BillManager.Instance.Data.AutoSync_Cycle)
-                {
-                    if (timer != null)
-                    {
-                        timer.Stop();
-                    }
-                    AutoSync_Mode = InfyPOS.Processors.BillManager.Instance.Data.AutoSync_Mode;
-                    AutoSync_Cycle = InfyPOS.Processors.BillManager.Instance.Data.AutoSync_Cycle;
-                    switch (AutoSync_Mode)
-                    {
-                        case "Hour":
-                            seconds = AutoSync_Cycle * 60 * 60;
-                            break;
-                        case "Minute":
-                            seconds = AutoSync_Cycle * 60;
-                            break;
-                        case "Day":
-                            seconds = AutoSync_Cycle * 60 * 60 * 60;
-                            break;
-                    }
-                    if (seconds > 0)
-                    {
-                        running = true;
-                        timer = new System.Timers.Timer(seconds * 1000);
-                        timer.Elapsed += Timer_Elapsed;
-                    }
-                }
+                Logger.Current.Info("Auto sync is off.");
+                return;
             }
-            else
+
+            AutoSync_Mode = InfyPOS.Processors.BillManager.Instance.Data.AutoSync_Mode;
+            AutoSync_Cycle = InfyPOS.Processors.BillManager.Instance.Data.AutoSync_Cycle;
+            switch (AutoSync_Mode)
             {
-                if (timer != null)
-                {
-                    timer.Stop();
-                }
+                case "Hour":
+                    seconds = AutoSync_Cycle * 60 * 60;
+                    break;
+                case "Minute":
+                    seconds = AutoSync_Cycle * 60;
+                    break;
+                case "Day":
+                    seconds = AutoSync_Cycle * 24 * 60 * 60;
+                    break;
             }
+
+            if (seconds <= 0)
+            {
+                Logger.Current.Info("Auto sync not started: set Every and Hour/Minute/Day in Data Sync.");
+                return;
+            }
+
+            running = true;
+            timer = new System.Timers.Timer(seconds * 1000d);
+            timer.AutoReset = true;
+            timer.Elapsed += Timer_Elapsed;
+            Start();
         }
 
-        System.Threading.AutoResetEvent autoreset = new System.Threading.AutoResetEvent(false);
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (!autoreset.WaitOne(100)) return;
+            if (!Monitor.TryEnter(_runLock))
+                return;
             try
             {
-
-                var Ready = InfyPOS.Processors.BillManager.Instance.Initialize(new System.ComponentModel.DoWorkEventArgs(null), sender as System.ComponentModel.BackgroundWorker);
-                if (Ready)
+                Logger.Current.Info("Auto sync starting...");
+                if (InfyPOS.Processors.BillManager.Instance.CurrentUser == null)
                 {
-
-
-                    ServiceProxy.Instance.DownloadMasterFromConfiguredSource(new InfyPOS.Processors.OfflineClient.WindowsOfflineRequest()
-                    {
-                        organizationid = InfyPOS.Processors.BillManager.Instance.Data.organizationid,
-                        locationid = InfyPOS.Processors.BillManager.Instance.Data.locationid,
-                        datatype = "MASTER",
-                        systemkey = InfyPOS.Processors.BillManager.Instance.SystemKey(),
-                        datafrom = InfyPOS.Processors.BillManager.Instance.Data.lastSyncOn,
-                        userid = InfyPOS.Processors.BillManager.Instance.CurrentUser.id
-                    });
-
-                    var sourceList = InfyPOS.Processors.BillManager.Instance.Bills.ToList();
-                    byte[] sourceBytes = System.Text.ASCIIEncoding.ASCII.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(sourceList));
-
-                    var result = ServiceProxy.Instance.SyncOffline(new InfyPOS.Processors.OfflineClient.WindowsOfflineRequest()
-                    {
-                        datatype = "BILL",
-                        datafrom = InfyPOS.Processors.BillManager.Instance.Data.lastSyncOn,
-                        data = InfyPOS.Processors.BufferedRealtimeCompressionEngine.Compress(sourceBytes),
-                        systemkey = InfyPOS.Processors.BillManager.Instance.SystemKey(),
-                        locationid = InfyPOS.Processors.BillManager.Instance.Data.locationid,
-                        organizationid = InfyPOS.Processors.BillManager.Instance.Data.organizationid,
-                        userid = InfyPOS.Processors.BillManager.Instance.CurrentUser.id
-                    });
-
-                    var response = result.Result;
-                    while (!response.completed && !response.error)
-                    {
-                        System.Threading.Thread.Sleep(1000);
-                        var statusresponse = ServiceProxy.Instance.GetWindowsOfflineStatus(response.key).Result;
-                        if (statusresponse.completed || statusresponse.error)
-                        {
-                            break;
-                        }
-                    }
-
-
-                    var sourceSettlementList = InfyPOS.Processors.BillManager.Instance.Settlements.ToList();
-                    sourceBytes = System.Text.ASCIIEncoding.ASCII.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(sourceSettlementList));
-
-                    result = ServiceProxy.Instance.SyncOffline(new InfyPOS.Processors.OfflineClient.WindowsOfflineRequest()
-                    {
-                        datatype = "SETTLEMENT",
-                        datafrom = InfyPOS.Processors.BillManager.Instance.Data.lastSyncOn,
-                        data = InfyPOS.Processors.BufferedRealtimeCompressionEngine.Compress(sourceBytes),
-                        systemkey = InfyPOS.Processors.BillManager.Instance.SystemKey(),
-                        locationid = InfyPOS.Processors.BillManager.Instance.Data.locationid,
-                        organizationid = InfyPOS.Processors.BillManager.Instance.Data.organizationid,
-                        userid = InfyPOS.Processors.BillManager.Instance.CurrentUser.id
-                    });
-                    response = result.Result;
-                    while (!response.completed && !response.error)
-                    {
-                        System.Threading.Thread.Sleep(1000);
-                        var statusresponse = ServiceProxy.Instance.GetWindowsOfflineStatus(response.key).Result;
-                        if (statusresponse.completed || statusresponse.error)
-                        {
-                            break;
-                        }
-                    }
+                    Logger.Current.Info("Auto sync skipped: login required.");
+                    return;
                 }
-            }catch(Exception exp)
+
+                var Ready = InfyPOS.Processors.BillManager.Instance.Initialize(
+                    new System.ComponentModel.DoWorkEventArgs(null),
+                    sender as System.ComponentModel.BackgroundWorker);
+                if (!Ready)
+                {
+                    Logger.Current.Info("Auto sync skipped: master data is not loaded.");
+                    return;
+                }
+
+                ServiceProxy.Instance.DownloadMasterFromConfiguredSource(new InfyPOS.Processors.OfflineClient.WindowsOfflineRequest()
+                {
+                    organizationid = InfyPOS.Processors.BillManager.Instance.Data.organizationid,
+                    locationid = InfyPOS.Processors.BillManager.Instance.Data.locationid,
+                    datatype = "MASTER",
+                    systemkey = InfyPOS.Processors.BillManager.Instance.SystemKey(),
+                    datafrom = InfyPOS.Processors.BillManager.Instance.Data.lastSyncOn,
+                    userid = InfyPOS.Processors.BillManager.Instance.CurrentUser.id
+                });
+
+                var bills = InfyPOS.Processors.BillManager.Instance.Bills;
+                if (bills == null)
+                    bills = new System.Collections.Generic.List<InfyPOS.Processors.OfflineClient.Bill>();
+                var sourceList = bills.ToList();
+                byte[] sourceBytes = System.Text.ASCIIEncoding.ASCII.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(sourceList));
+
+                var result = ServiceProxy.Instance.SyncOffline(new InfyPOS.Processors.OfflineClient.WindowsOfflineRequest()
+                {
+                    datatype = "BILL",
+                    datafrom = InfyPOS.Processors.BillManager.Instance.Data.lastSyncOn,
+                    data = InfyPOS.Processors.BufferedRealtimeCompressionEngine.Compress(sourceBytes),
+                    systemkey = InfyPOS.Processors.BillManager.Instance.SystemKey(),
+                    locationid = InfyPOS.Processors.BillManager.Instance.Data.locationid,
+                    organizationid = InfyPOS.Processors.BillManager.Instance.Data.organizationid,
+                    userid = InfyPOS.Processors.BillManager.Instance.CurrentUser.id
+                });
+
+                var response = result.Result;
+                while (!response.completed && !response.error)
+                {
+                    Thread.Sleep(1000);
+                    var statusresponse = ServiceProxy.Instance.GetWindowsOfflineStatus(response.key).Result;
+                    if (statusresponse.completed || statusresponse.error)
+                        break;
+                }
+
+                var settlements = InfyPOS.Processors.BillManager.Instance.Settlements;
+                if (settlements == null)
+                    settlements = new System.Collections.Generic.List<InfyPOS.Processors.OfflineClient.Settlement>();
+                var sourceSettlementList = settlements.ToList();
+                sourceBytes = System.Text.ASCIIEncoding.ASCII.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(sourceSettlementList));
+
+                result = ServiceProxy.Instance.SyncOffline(new InfyPOS.Processors.OfflineClient.WindowsOfflineRequest()
+                {
+                    datatype = "SETTLEMENT",
+                    datafrom = InfyPOS.Processors.BillManager.Instance.Data.lastSyncOn,
+                    data = InfyPOS.Processors.BufferedRealtimeCompressionEngine.Compress(sourceBytes),
+                    systemkey = InfyPOS.Processors.BillManager.Instance.SystemKey(),
+                    locationid = InfyPOS.Processors.BillManager.Instance.Data.locationid,
+                    organizationid = InfyPOS.Processors.BillManager.Instance.Data.organizationid,
+                    userid = InfyPOS.Processors.BillManager.Instance.CurrentUser.id
+                });
+                response = result.Result;
+                while (!response.completed && !response.error)
+                {
+                    Thread.Sleep(1000);
+                    var statusresponse = ServiceProxy.Instance.GetWindowsOfflineStatus(response.key).Result;
+                    if (statusresponse.completed || statusresponse.error)
+                        break;
+                }
+
+                Logger.Current.Info("Auto sync completed.");
+            }
+            catch (Exception exp)
             {
-                Quanto.Logger.Current.Error(exp);
+                Logger.Current.Error("Auto sync failed", exp);
             }
             finally
             {
-                autoreset.Set();
+                Monitor.Exit(_runLock);
             }
         }
 
-
-
-
         public void Start()
         {
-            if (running)
-            {
-                Quanto.Logger.Current.Info("Keep alive service starting...");
-                timer.Enabled = true;
-                timer.Start();
-                Quanto.Logger.Current.Info("Keep alive service started");
-            }
+            if (!running || timer == null)
+                return;
+            timer.Enabled = true;
+            timer.Start();
+            Logger.Current.InfoFormat(
+                "Auto sync started: every {0} {1}(s)",
+                AutoSync_Cycle,
+                AutoSync_Mode);
         }
 
         public void Stop()
         {
-            if (running && timer.Enabled)
-            {
-                timer.Stop();
-                timer.Enabled = false;
-            }
+            if (timer == null)
+                return;
+            timer.Stop();
+            timer.Enabled = false;
+            timer.Elapsed -= Timer_Elapsed;
+            timer.Dispose();
+            timer = null;
+            running = false;
         }
     }
 }

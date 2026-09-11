@@ -25,7 +25,6 @@ namespace Quanto.Offline
                 return;
             }
             button1.Enabled = false;
-            OfflineBill.Instance.Intiaize();
             InfyPOS.Processors.BillManager.Instance.Data.AutoSync = chkAutoStart.Checked;
             InfyPOS.Processors.BillManager.Instance.Data.AutoSync_Mode = "";
             if (rdHour.Checked)
@@ -35,15 +34,15 @@ namespace Quanto.Offline
             if (rdDay.Checked)
                 InfyPOS.Processors.BillManager.Instance.Data.AutoSync_Mode = "Day";
             InfyPOS.Processors.BillManager.Instance.Data.AutoSync_Cycle = (int)nmEvery.Value;
+            InfyPOS.Processors.BillManager.Instance.PersistMasters();
+            OfflineBill.StartIfConfigured();
             
             if (chkBilling.Checked)
             {
-                InfyPOS.Processors.BillManager.Instance.PersistMasters();
                 BillSync();
             }
             else if (chkSettlement.Checked)
             {
-                InfyPOS.Processors.BillManager.Instance.PersistMasters();
                 SettlementSync();
             }
             else if (chkMaster.Checked)

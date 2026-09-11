@@ -261,8 +261,17 @@ namespace Quanto.Offline
 
             if (employeeid == 0 || counterid == 0)
             {
+                InfyPOS.Processors.BillManager.Instance.ApplyLocalBillingSettings();
+                employeeid = InfyPOS.Processors.BillManager.Instance.Data.employeeid;
+                counterid = InfyPOS.Processors.BillManager.Instance.Data.counterid;
+            }
+
+            if (employeeid == 0 || counterid == 0)
+            {
                 BIllSettings bIllSettings = new BIllSettings(true);
                 if (bIllSettings.ShowDialog() == DialogResult.Cancel) return;
+                employeeid = InfyPOS.Processors.BillManager.Instance.Data.employeeid;
+                counterid = InfyPOS.Processors.BillManager.Instance.Data.counterid;
             }
 
             if (settlement.paymentinfo.credit_paid > 0)
@@ -290,7 +299,7 @@ namespace Quanto.Offline
             }
 
 
-            settlement.settlementon = settlementDate.Value.Date;
+            settlement.settlementon = settlementDate.Value.Date.Add(DateTime.Now.TimeOfDay);
             settlement.createdon = DateTime.Now;
             settlement.cashiername = lblCollectionby.Text;
             settlement.countername = lblCounter.Text;
@@ -424,6 +433,12 @@ namespace Quanto.Offline
         {
             BIllSettings bIllSettings = new BIllSettings(true);
             if (bIllSettings.ShowDialog() == DialogResult.Cancel) return;
+            counterid = InfyPOS.Processors.BillManager.Instance.Data.counterid;
+            employeeid = InfyPOS.Processors.BillManager.Instance.Data.employeeid;
+            if (counterid > 0)
+                lblCounter.Text = InfyPOS.Processors.BillManager.Instance.Data.Counter.Find(ex => ex.id == counterid).name;
+            if (employeeid > 0)
+                lblCollectionby.Text = InfyPOS.Processors.BillManager.Instance.Data.Employee.Find(ex => ex.id == employeeid).name;
         }
 
         private void settlementDate_ValueChanged(object sender, EventArgs e)

@@ -295,6 +295,94 @@ namespace Quanto
             }
         }
 
+        public InfyPOS.Processors.OfflineClient.ClientStockResult LookupStockFromMaster(string barcode)
+        {
+            var fail = new InfyPOS.Processors.OfflineClient.ClientStockResult
+            {
+                error = true,
+                errormessage = "MasterApiUrl / ClientURL is not configured."
+            };
+            if (!MachineConfig.IsClient || string.IsNullOrEmpty(ClientWebUrl))
+                return fail;
+
+            using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(8) })
+            {
+                string url = ClientWebUrl + "/TextilePOS/ClientStock?barcode=" + Uri.EscapeDataString(barcode ?? "");
+                Logger.Current.Info("LookupStockFromMaster " + url);
+                try
+                {
+                    var result = client.GetAsync(url).GetAwaiter().GetResult();
+                    var json = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    if (!result.IsSuccessStatusCode)
+                    {
+                        return new InfyPOS.Processors.OfflineClient.ClientStockResult
+                        {
+                            error = true,
+                            errormessage = "MASTER returned " + (int)result.StatusCode + ": " + json
+                        };
+                    }
+                    return JsonConvert.DeserializeObject<InfyPOS.Processors.OfflineClient.ClientStockResult>(json)
+                           ?? new InfyPOS.Processors.OfflineClient.ClientStockResult
+                           {
+                               error = true,
+                               errormessage = "Empty stock response from MASTER."
+                           };
+                }
+                catch (Exception exp)
+                {
+                    return new InfyPOS.Processors.OfflineClient.ClientStockResult
+                    {
+                        error = true,
+                        errormessage = exp.Message
+                    };
+                }
+            }
+        }
+
+        public InfyPOS.Processors.OfflineClient.ClientCustomerResult LookupCustomerFromMaster(string mobile)
+        {
+            var fail = new InfyPOS.Processors.OfflineClient.ClientCustomerResult
+            {
+                error = true,
+                errormessage = "MasterApiUrl / ClientURL is not configured."
+            };
+            if (!MachineConfig.IsClient || string.IsNullOrEmpty(ClientWebUrl))
+                return fail;
+
+            using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(8) })
+            {
+                string url = ClientWebUrl + "/TextilePOS/ClientCustomerLookup?mobile=" + Uri.EscapeDataString(mobile ?? "");
+                Logger.Current.Info("LookupCustomerFromMaster " + url);
+                try
+                {
+                    var result = client.GetAsync(url).GetAwaiter().GetResult();
+                    var json = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    if (!result.IsSuccessStatusCode)
+                    {
+                        return new InfyPOS.Processors.OfflineClient.ClientCustomerResult
+                        {
+                            error = true,
+                            errormessage = "MASTER returned " + (int)result.StatusCode + ": " + json
+                        };
+                    }
+                    return JsonConvert.DeserializeObject<InfyPOS.Processors.OfflineClient.ClientCustomerResult>(json)
+                           ?? new InfyPOS.Processors.OfflineClient.ClientCustomerResult
+                           {
+                               error = true,
+                               errormessage = "Empty customer response from MASTER."
+                           };
+                }
+                catch (Exception exp)
+                {
+                    return new InfyPOS.Processors.OfflineClient.ClientCustomerResult
+                    {
+                        error = true,
+                        errormessage = exp.Message
+                    };
+                }
+            }
+        }
+
         public InfyPOS.Processors.OfflineClient.ClientUploadResult UploadSettlementsToMaster(
             List<InfyPOS.Processors.OfflineClient.Settlement> settlements)
         {

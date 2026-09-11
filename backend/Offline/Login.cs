@@ -41,6 +41,7 @@ namespace Quanto.Offline
                 return;
             }
             InfyPOS.Processors.BillManager.Instance.CurrentUser = user;
+            Quanto.OfflineBill.StartIfConfigured();
             this.DialogResult = DialogResult.OK;
         }
 

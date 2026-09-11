@@ -111,6 +111,22 @@ namespace InfyPOS.Processors
             public List<Settlement> settlements { get; set; }
         }
 
+        public class ClientStockResult
+        {
+            public bool error { get; set; }
+            public string errormessage { get; set; }
+            public bool found { get; set; }
+            public Stock stock { get; set; }
+        }
+
+        public class ClientCustomerResult
+        {
+            public bool error { get; set; }
+            public string errormessage { get; set; }
+            public bool found { get; set; }
+            public Customer customer { get; set; }
+        }
+
         public class WindowsOfflineResponse
         {
             DateTime createdon { get; set; }
@@ -158,6 +174,9 @@ namespace InfyPOS.Processors
                 {
                     var bill = new Bill() { Billitems = new List<BillItems>() };
                     bill.billdate = this.billdate;
+                    bill.createdon = this.createdon;
+                    bill.createon = this.createon != DateTime.MinValue ? this.createon : this.createdon;
+                    bill.deviceid = this.deviceid;
                     bill.companyid = grp.Key;
                     bill.customername = this.customername;
                     bill.customermobileno = this.customermobileno;
@@ -220,6 +239,8 @@ namespace InfyPOS.Processors
             public long index { get; set; }
             public long createdby { get; set; }
             public string billno { get; set; }
+            /// <summary>Machine that created the bill (MASTER/CLIENT DeviceId). Used for per-machine numbering.</summary>
+            public string deviceid { get; set; }
             public long organizationid { get; set; }
             public long locationid { get; set; }
             public decimal gross { get; set; }
@@ -996,6 +1017,9 @@ namespace InfyPOS.Processors
             public string name { get; set; }
             public long id { get; set; }
             public string no { get; set; }
+            public string mobileno { get { return no; } set { if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(no)) no = value; } }
+            public string mobile { get { return no; } set { if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(no)) no = value; } }
+            public string phone { get { return no; } set { if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(no)) no = value; } }
         }
     }
 }

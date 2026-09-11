@@ -305,7 +305,8 @@
             this.lblLastBillNo.AutoSize = true;
             this.lblLastBillNo.Font = new System.Drawing.Font("Verdana", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblLastBillNo.ForeColor = System.Drawing.Color.DimGray;
-            this.lblLastBillNo.Location = new System.Drawing.Point(380, 518);
+            this.lblLastBillNo.Location = new System.Drawing.Point(29, 496);
+            this.lblLastBillNo.MaximumSize = new System.Drawing.Size(440, 22);
             this.lblLastBillNo.Name = "lblLastBillNo";
             this.lblLastBillNo.Size = new System.Drawing.Size(110, 18);
             this.lblLastBillNo.TabIndex = 26;
@@ -397,7 +398,7 @@
             this.listView1.HideSelection = false;
             this.listView1.Location = new System.Drawing.Point(32, 119);
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(1121, 396);
+            this.listView1.Size = new System.Drawing.Size(1121, 372);
             this.listView1.TabIndex = 29;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;

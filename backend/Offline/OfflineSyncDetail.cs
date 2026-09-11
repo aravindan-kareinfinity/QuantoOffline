@@ -53,6 +53,8 @@ namespace Quanto.Offline
             dataGridView1.ColumnCount = 8;
             dataGridView1.Columns[0].Name = "Bill Date";
             dataGridView1.Columns[0].DataPropertyName = "billdate";
+            dataGridView1.Columns[0].DefaultCellStyle.Format = "dd-MM-yyyy hh:mm tt";
+            dataGridView1.Columns[0].Width = 180;
             dataGridView1.Columns[1].Name = "Bill No";
             dataGridView1.Columns[1].DataPropertyName = "billno";
             dataGridView1.Columns[2].Name = "Total Piece";
@@ -95,6 +97,8 @@ namespace Quanto.Offline
             dataGridView1.ColumnCount = 9;
             dataGridView1.Columns[0].Name = "Settlement On";
             dataGridView1.Columns[0].DataPropertyName = "settlementon";
+            dataGridView1.Columns[0].DefaultCellStyle.Format = "dd-MM-yyyy hh:mm tt";
+            dataGridView1.Columns[0].Width = 180;
             dataGridView1.Columns[1].Name = "Code";
             dataGridView1.Columns[1].DataPropertyName = "code";
             dataGridView1.Columns[2].Name = "Bill Nos";

@@ -26,15 +26,23 @@ namespace Quanto.Offline
         }
         private void button1_Click(object sender, EventArgs e)
         {
-            if (cmbBiller.SelectedItem != null)
-            {
-                InfyPOS.Processors.BillManager.Instance.Data.employeeid = (cmbBiller.SelectedItem as InfyPOS.Processors.OfflineClient.Employee).id;
-            }
-            if (cmbCounter.SelectedItem != null)
-            {
-                InfyPOS.Processors.BillManager.Instance.Data.counterid = (cmbCounter.SelectedItem as InfyPOS.Processors.OfflineClient.Counter).id;
-            }
+            if (cmbBiller.SelectedItem == null && cmbBiller.Items.Count > 0)
+                cmbBiller.SelectedIndex = 0;
+            if (cmbCounter.SelectedItem == null && cmbCounter.Items.Count > 0)
+                cmbCounter.SelectedIndex = 0;
 
+            if (cmbBiller.SelectedItem == null)
+            {
+                MessageBox.Show("Select a biller.", "Billing settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            if (cmbCounter.SelectedItem == null)
+            {
+                MessageBox.Show("Select a counter.", "Billing settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            InfyPOS.Processors.BillManager.Instance.Data.employeeid = (cmbBiller.SelectedItem as InfyPOS.Processors.OfflineClient.Employee).id;
+            InfyPOS.Processors.BillManager.Instance.Data.counterid = (cmbCounter.SelectedItem as InfyPOS.Processors.OfflineClient.Counter).id;
             InfyPOS.Processors.BillManager.Instance.Data.BillPrefix = txtBillPrefix.Text;
             InfyPOS.Processors.BillManager.Instance.Data.SettlementPrefix = txtSettlementPrefix.Text;
             InfyPOS.Processors.BillManager.Instance.Data.CounterPrefix = txtCounterCode.Text;
@@ -45,11 +53,15 @@ namespace Quanto.Offline
 
             foreach (var t in companyPrefixList)
             {
-                t.company.billprefix = t.Prefix.Text;
-                t.company.billno = ParseNo(t.BillNo.Text);
-                t.company.settlementno = ParseNo(t.SettlementNo.Text);
+                t.company.billprefix = t.Prefix.Text ?? "";
+                if (NoReset.Checked)
+                {
+                    t.company.billno = ParseNo(t.BillNo.Text);
+                    t.company.settlementno = ParseNo(t.SettlementNo.Text);
+                }
             }
             InfyPOS.Processors.BillManager.Instance.PersistMasters();
+            InfyPOS.Processors.BillManager.Instance.SaveLocalBillingSettings();
             this.DialogResult = DialogResult.OK;
         }
 
@@ -69,15 +81,14 @@ namespace Quanto.Offline
         List<GridItem> companyPrefixList = new List<GridItem>();
         private void Settings_Load(object sender, EventArgs e)
         {
-            //txtCompanyCode.Enabled = InfyPOS.Processors.BillManager.Instance.Data.MultiCompany;
+            InfyPOS.Processors.BillManager.Instance.ApplyMachineBillingSettings();
+
+            cmbCounter.DisplayMember = "name";
+            cmbCounter.ValueMember = "id";
             cmbCounter.DataSource = InfyPOS.Processors.BillManager.Instance.Data.Counter;
+            cmbBiller.DisplayMember = "name";
+            cmbBiller.ValueMember = "id";
             cmbBiller.DataSource = InfyPOS.Processors.BillManager.Instance.Data.Employee;
-            var autonumberlist = InfyPOS.Processors.BillManager.Instance.Data.AutoNumber.GroupBy(ex => new { ex.floor, ex.floorid }).ToList().
-                ConvertAll(x => new InfyPOS.Processors.OfflineClient.AutoNumber()
-                {
-                    floor = x.Key.floor,
-                    floorid = x.Key.floorid
-                });
 
             int currenty = 40;
             foreach (var item in InfyPOS.Processors.BillManager.Instance.Data.Company)
@@ -111,18 +122,7 @@ namespace Quanto.Offline
                 txtbox.Enabled = false;
                 gridItem.SettlementNo = txtbox;
                 currenty += 30;
-                if (string.IsNullOrEmpty(item.billprefix))
-                {
-                    if (autonumberlist.Exists(ex => ex.companyid == item.id))
-                    {
-                        txtbox.Text = autonumberlist.Find(ex => ex.companyid == item.id).prefix;
-                    }
-                }
-                else
-                {
-                    gridItem.Prefix.Text = item.billprefix;
-                }
-                gridItem.Prefix.Text = item.billprefix;
+                gridItem.Prefix.Text = item.billprefix ?? "";
                 gridItem.BillNo.Text = item.billno.ToString();
                 gridItem.SettlementNo.Text = item.settlementno.ToString();
                 if (item.billno > 0 || item.settlementno > 0)
@@ -134,16 +134,23 @@ namespace Quanto.Offline
 
             if (InfyPOS.Processors.BillManager.Instance.Data.employeeid > 0)
             {
-                cmbBiller.SelectedItem = InfyPOS.Processors.BillManager.Instance.Data.Employee.Find(ex => ex.id == InfyPOS.Processors.BillManager.Instance.Data.employeeid);
+                cmbBiller.SelectedValue = InfyPOS.Processors.BillManager.Instance.Data.employeeid;
+            }
+            else if (cmbBiller.Items.Count > 0)
+            {
+                cmbBiller.SelectedIndex = 0;
             }
             if (InfyPOS.Processors.BillManager.Instance.Data.counterid > 0)
             {
-                cmbCounter.SelectedItem = InfyPOS.Processors.BillManager.Instance.Data.Counter.Find(ex => ex.id == InfyPOS.Processors.BillManager.Instance.Data.counterid);
+                cmbCounter.SelectedValue = InfyPOS.Processors.BillManager.Instance.Data.counterid;
+            }
+            else if (cmbCounter.Items.Count > 0)
+            {
+                cmbCounter.SelectedIndex = 0;
             }
 
-            //txtLocationCode.Text = InfyPOS.Processors.BillManager.Instance.Data.LocationCode;
-            txtBillPrefix.Text = InfyPOS.Processors.BillManager.Instance.Data.BillPrefix;
-            txtSettlementPrefix.Text = InfyPOS.Processors.BillManager.Instance.Data.SettlementPrefix;
+            txtBillPrefix.Text = InfyPOS.Processors.BillManager.Instance.Data.BillPrefix ?? "";
+            txtSettlementPrefix.Text = InfyPOS.Processors.BillManager.Instance.Data.SettlementPrefix ?? "";
             txtCounterCode.Text = InfyPOS.Processors.BillManager.Instance.Data.CounterPrefix;
             chkAutoBarcode.Checked = InfyPOS.Processors.BillManager.Instance.Data.AutoBarcode;
             chkSingleWindowSettlement.Checked = InfyPOS.Processors.BillManager.Instance.Data.Autosettlement;

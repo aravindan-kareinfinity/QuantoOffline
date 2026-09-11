@@ -16,6 +16,9 @@ namespace Quanto
         static void Main(string[] args)
         {
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+            AppConfigFile.Initialize();
+            Logger.Configure();
+            Logger.Current.Info("App.config: " + (AppConfigFile.Path ?? "(none)"));
             bool serviceStarting = false;
             string SERVICE_NAME = "Quanto-Client-Service";
             if (args != null && args.Length == 1 && args[0] == "CONFIG" && !System.Diagnostics.Debugger.IsAttached)
@@ -161,6 +164,43 @@ namespace Quanto
     public static class Logger
     {
         private static log4net.ILog current;
+        private static bool configured;
+
+        public static void Configure()
+        {
+            if (configured)
+                return;
+            configured = true;
+
+            var datafolder = System.Configuration.ConfigurationManager.AppSettings["Data"];
+            if (string.IsNullOrWhiteSpace(datafolder))
+                datafolder = AppDomain.CurrentDomain.BaseDirectory;
+
+            try
+            {
+                System.IO.Directory.CreateDirectory(datafolder);
+            }
+            catch
+            {
+            }
+
+            var logPath = System.IO.Path.Combine(datafolder, "TextilePOS.log");
+            var repo = log4net.LogManager.GetRepository(Assembly.GetExecutingAssembly());
+            if (!repo.Configured)
+                log4net.Config.XmlConfigurator.Configure();
+
+            foreach (var appender in repo.GetAppenders())
+            {
+                var fileAppender = appender as log4net.Appender.FileAppender;
+                if (fileAppender == null)
+                    continue;
+                fileAppender.File = logPath;
+                fileAppender.ActivateOptions();
+            }
+
+            Current.Info("Log file: " + logPath);
+        }
+
         public static log4net.ILog Current
         {
             get

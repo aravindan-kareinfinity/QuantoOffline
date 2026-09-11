@@ -48,8 +48,8 @@
     </Reference>
   </ItemGroup>
 
+  <!-- ConfigurationManager/log4net need App.config beside the published EXE — do not embed in single-file -->
   <ItemGroup>
-    <!-- ConfigurationManager/log4net need App.config beside the published EXE — do not embed in single-file -->
     <None Update="App.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -58,6 +58,11 @@
     <Content Include="BI\biquerys.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Include="Tally\tallyResult.xml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
+
+  <Target Name="CopyPublishedAppConfigAsDllConfig" AfterTargets="Publish">
+    <Copy SourceFiles="$(PublishDir)App.config" DestinationFiles="$(PublishDir)Quanto.Client.dll.config" Condition="Exists('$(PublishDir)App.config')" />
+    <Copy SourceFiles="$(PublishDir)App.config" DestinationFiles="$(PublishDir)Quanto.Client.exe.config" Condition="Exists('$(PublishDir)App.config')" />
+  </Target>
 
   <!-- Match net48 compile set: SDK includes all *.cs by default; exclude unused/orphan server models -->
   <ItemGroup>

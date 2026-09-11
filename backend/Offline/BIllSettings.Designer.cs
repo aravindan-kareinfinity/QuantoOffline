@@ -215,7 +215,6 @@
             this.txtBillPrefix.Name = "txtBillPrefix";
             this.txtBillPrefix.Size = new System.Drawing.Size(221, 27);
             this.txtBillPrefix.TabIndex = 40;
-            this.txtBillPrefix.Text = "B[CMP][CNT][DD][MM][YY]/[NO]";
             // 
             // label3
             // 
@@ -233,7 +232,6 @@
             this.txtSettlementPrefix.Name = "txtSettlementPrefix";
             this.txtSettlementPrefix.Size = new System.Drawing.Size(222, 27);
             this.txtSettlementPrefix.TabIndex = 55;
-            this.txtSettlementPrefix.Text = "S[CMP][CNT][DD][MM][YY]/[NO]";
             // 
             // label5
             // 

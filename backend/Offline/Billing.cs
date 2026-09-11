@@ -214,11 +214,12 @@ namespace Quanto.Offline
             if (e.KeyChar == 13)
             {
                 e.Handled = true;
-                if (txtBarcode.Text == "0")
+                var barcode = (txtBarcode.Text ?? "").Trim();
+                if (barcode == "0")
                 {
                     button2_Click(sender, e);
                 }
-                if (txtBarcode.Text == "C")
+                if (barcode == "C")
                 {
                     CurrentBill.customername = "";
                     CurrentBill.customermobileno = "";
@@ -229,45 +230,66 @@ namespace Quanto.Offline
                         CurrentBill.customermobileno = customer.customermobileno;
                         CurrentBill.creditbill = customer.customercredit;
                     }
+                    txtBarcode.Text = "";
                 }
-                else if (txtBarcode.Text.StartsWith("."))
+                else if (barcode.StartsWith("."))
                 {
-                    if (AddSMCode(txtBarcode.Text))
+                    if (AddSMCode(barcode))
                         txtBarcode.Text = "";
                 }
-                else if (AddBarcode(txtBarcode.Text))
+                else if (ShouldOpenCustomerForMobile(barcode))
+                {
+                    txtBarcode.Text = "";
+                    var mobile = barcode;
+                    BeginInvoke(new Action(() => OpenCustomerForMobile(mobile)));
+                }
+                else if (AddBarcode(barcode))
                 {
                     txtBarcode.Text = "";
                 }
                 else
                 {
-                    if(InfyPOS.Processors.BillManager.Instance.Data.Mobile10digit &&
-                        txtBarcode.Text.Length == 10)
-                    {
-                        var customerdata = BillManager.CustomerManager.Instance.Get(txtBarcode.Text);
-                        if (customerdata == null)
-                        {
-                            Customer customer = new Customer(txtBarcode.Text);
-                            if (customer.ShowDialog() == DialogResult.OK)
-                            {
-                                CurrentBill.customername = customer.customername;
-                                CurrentBill.customermobileno = customer.customermobileno;
-                            }
-                        }
-                        else
-                        {
-                            CurrentBill.customername = customerdata.name;
-                            CurrentBill.customermobileno = customerdata.no;
-                            cmbProduts.Focus();
-                        }
-                    }
-                    else
-                    {
-                        cmbProduts.Focus();
-                    }
-                    
+                    cmbProduts.Focus();
                 }
             }
+        }
+
+        private static bool IsTenDigitMobile(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text) || text.Length != 10)
+                return false;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (!char.IsDigit(text[i]))
+                    return false;
+            }
+            return true;
+        }
+
+        private bool ShouldOpenCustomerForMobile(string mobile)
+        {
+            if (string.IsNullOrWhiteSpace(mobile))
+                return false;
+            if (BillManager.CustomerManager.Instance.Get(mobile) != null)
+                return true;
+            InfyPOS.Processors.BillManager.Instance.ApplyLocalBillingSettings();
+            return InfyPOS.Processors.BillManager.Instance.Data != null &&
+                   InfyPOS.Processors.BillManager.Instance.Data.Mobile10digit &&
+                   IsTenDigitMobile(mobile);
+        }
+
+        private void OpenCustomerForMobile(string mobile)
+        {
+            var existing = BillManager.CustomerManager.Instance.Get(mobile);
+            using (var customer = new Customer(mobile, existing != null ? existing.name : ""))
+            {
+                if (customer.ShowDialog(this) != DialogResult.OK)
+                    return;
+                CurrentBill.customername = customer.customername;
+                CurrentBill.customermobileno = customer.customermobileno;
+                CurrentBill.creditbill = customer.customercredit;
+            }
+            cmbProduts.Focus();
         }
 
         private bool AddSMCode(string text)
@@ -437,6 +459,9 @@ namespace Quanto.Offline
             {
                 try
                 {
+                    InfyPOS.Processors.BillManager.Instance.RefreshClientMasterFromMaster();
+                    cmbProduts.DataSource = InfyPOS.Processors.BillManager.Instance.Data.Products.OrderBy(x => x.name).ToList();
+                    cmbTax.DataSource = InfyPOS.Processors.BillManager.Instance.Data.Tax;
                     InfyPOS.Processors.BillManager.Instance.LoadClientBillsFromMaster(billdate);
                 }
                 catch (Exception ex)
@@ -630,6 +655,7 @@ namespace Quanto.Offline
                 billScroller.Value = 0;
                 lblAvailable.Text = "Available Bills - 0";
                 lblLastBillNo.Text = NextBillNoText();
+                lblLastBillNo.BringToFront();
                 return;
             }
 
@@ -644,7 +670,8 @@ namespace Quanto.Offline
             }
             billScroller.Value = index;
             lblAvailable.Text = "Available Bills - " + currentBillList.Count;
-            lblLastBillNo.Text = BillNoText(currentBillList[index - 1]) + "(" + index + ")";
+            lblLastBillNo.Text = BillNoText(currentBillList[index - 1]);
+            lblLastBillNo.BringToFront();
         }
 
         private static string BillNoText(InfyPOS.Processors.OfflineClient.Bill bill)
@@ -683,11 +710,12 @@ namespace Quanto.Offline
             if (!SelectPrinter(false))
                 return;
 
-            CurrentBill.billdate = billdate;
+            CurrentBill.billdate = billdate.Date.Add(DateTime.Now.TimeOfDay);
             CurrentBill.addiscountaspercentage = discountpercentageapplied;
             CurrentBill.addiscountasvalue = discountvalueapplied;
 
             CurrentBill.createdon = DateTime.Now;
+            CurrentBill.createon = CurrentBill.createdon;
             CurrentBill.counterid = InfyPOS.Processors.BillManager.Instance.Data.counterid;
             CurrentBill.createdby = InfyPOS.Processors.BillManager.Instance.CurrentUser.id;
 
@@ -707,8 +735,7 @@ namespace Quanto.Offline
                 CurrentBill.addiscountpercentage = d;
             if (decimal.TryParse(txttotaldiscount.Text, out d))
                 CurrentBill.additionaldiscount = d;
-            if (InfyPOS.Processors.BillManager.Instance.Data.employeeid == 0 ||
-                string.IsNullOrEmpty(InfyPOS.Processors.BillManager.Instance.Data.BillPrefix))
+            if (InfyPOS.Processors.BillManager.Instance.NeedsBillingSettingsDialog())
             {
                 Quanto.Offline.BIllSettings settings = new Quanto.Offline.BIllSettings();
                 if (settings.ShowDialog() != DialogResult.OK)
@@ -861,7 +888,7 @@ namespace Quanto.Offline
                 foreach (var item in bill.Billitems)
                 {
                     sb.Append("<tr>");
-                    sb.AppendFormat("<td>{0}</td>", bill.billdate.ToString("dd-MM-yyyy"));
+                    sb.AppendFormat("<td>{0}</td>", bill.billdate.ToString("dd-MM-yyyy hh:mm tt"));
                     sb.AppendFormat("<td>{0}</td>", bill.billno);
                     sb.AppendFormat("<td>{0}</td>", item.barcode);
                     sb.AppendFormat("<td>{0}</td>", item.printingname);

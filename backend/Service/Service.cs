@@ -167,6 +167,69 @@ namespace Quanto
             return Ok(result);
         }
 
+        [HttpGet("ClientStock")]
+        public async Task<ActionResult> ClientStock([FromQuery] string barcode)
+        {
+            var result = await Task.Run(() =>
+            {
+                var payload = new OfflineClient.ClientStockResult();
+                if (!MachineConfig.IsMaster)
+                {
+                    payload.error = true;
+                    payload.errormessage = "This computer is not configured as MASTER.";
+                    return payload;
+                }
+                if (string.IsNullOrWhiteSpace(barcode))
+                    return payload;
+                try
+                {
+                    BillManager.Instance.EnsureMasterBusinessDataLoaded();
+                    var stock = BillManager.Instance.FindStockLocal(barcode);
+                    payload.found = stock != null;
+                    payload.stock = stock;
+                    return payload;
+                }
+                catch (Exception exp)
+                {
+                    payload.error = true;
+                    payload.errormessage = exp.Message;
+                    return payload;
+                }
+            });
+            return Ok(result);
+        }
+
+        [HttpGet("ClientCustomerLookup")]
+        public async Task<ActionResult> ClientCustomerLookup([FromQuery] string mobile)
+        {
+            var result = await Task.Run(() =>
+            {
+                var payload = new OfflineClient.ClientCustomerResult();
+                if (!MachineConfig.IsMaster)
+                {
+                    payload.error = true;
+                    payload.errormessage = "This computer is not configured as MASTER.";
+                    return payload;
+                }
+                try
+                {
+                    BillManager.Instance.EnsureTransactionFilesLoaded();
+                    BillManager.CustomerManager.Instance.Reload();
+                    var customer = BillManager.CustomerManager.Instance.Get(mobile);
+                    payload.found = customer != null;
+                    payload.customer = customer;
+                    return payload;
+                }
+                catch (Exception exp)
+                {
+                    payload.error = true;
+                    payload.errormessage = exp.Message;
+                    return payload;
+                }
+            });
+            return Ok(result);
+        }
+
         [HttpGet("ClientCustomer")]
         public async Task<ActionResult> ClientCustomer()
         {
